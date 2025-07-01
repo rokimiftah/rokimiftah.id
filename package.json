@@ -1,0 +1,39 @@
+{
+	"name": "rokimiftah.id",
+	"type": "module",
+	"scripts": {
+		"astro": "bunx --bun astro",
+		"build": "bunx --bun astro build",
+		"dev": "bunx --bun astro dev",
+		"preview": "bunx --bun astro preview"
+	},
+	"dependencies": {
+		"@astrojs/mdx": "^4.3.0",
+		"@astrojs/sitemap": "^3.4.1",
+		"@fontsource/onest": "^5.2.9",
+		"@fontsource/open-sans": "^5.2.6",
+		"@tailwindcss/typography": "^0.5.16",
+		"@tailwindcss/vite": "^4.1.11",
+		"astro": "^5.10.1",
+		"astro-seo": "^0.8.4",
+		"clsx": "^2.1.1",
+		"sharp": "^0.33.5",
+		"tailwind-merge": "^2.6.0",
+		"tailwindcss": "^4.1.11",
+		"typescript": "^5.8.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.0.6",
+		"prettier": "^3.6.2",
+		"prettier-plugin-astro": "^0.14.1",
+		"prettier-plugin-astro-organize-imports": "^0.4.11",
+		"prettier-plugin-tailwindcss": "^0.6.13"
+	},
+	"trustedDependencies": [
+		"@biomejs/biome",
+		"@parcel/watcher",
+		"@tailwindcss/oxide",
+		"esbuild",
+		"sharp"
+	]
+}

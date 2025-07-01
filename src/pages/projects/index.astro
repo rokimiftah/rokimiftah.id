@@ -1,0 +1,45 @@
+---
+import ArrowCard from "@components/ArrowCard.astro";
+import BackToPrev from "@components/BackToPrev.astro";
+import Container from "@components/Container.astro";
+import { PROJECTS } from "@config/consts";
+import PageLayout from "@layouts/PageLayout.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+const projects: CollectionEntry<"projects">[] = (
+	await getCollection("projects")
+)
+	.filter((project: CollectionEntry<"projects">) => !project.data.draft)
+	.sort(
+		(a: CollectionEntry<"projects">, b: CollectionEntry<"projects">) =>
+			b.data.date.valueOf() - a.data.date.valueOf()
+	);
+---
+
+<PageLayout title={PROJECTS.TITLE}>
+	<Container>
+		<div class="space-y-5">
+			<div>
+				<BackToPrev href="/"> Home </BackToPrev>
+			</div>
+			<div class="space-y-4">
+				<section class="space-y-4">
+					<div class="text-end font-semibold text-black">
+						Projects
+					</div>
+					<div>
+						<ul class="flex flex-col gap-4">
+							{
+								projects.map((project) => (
+									<li>
+										<ArrowCard entry={project} />
+									</li>
+								))
+							}
+						</ul>
+					</div>
+				</section>
+			</div>
+		</div>
+	</Container>
+</PageLayout>

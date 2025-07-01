@@ -1,0 +1,101 @@
+---
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+	headings: MarkdownHeading[];
+	title: string;
+}
+
+const { headings, title } = Astro.props;
+
+const titleSlug = title
+	.toLowerCase()
+	.replace(/[^a-z0-9]+/g, "-")
+	.replace(/^-*|-*$/g, "");
+---
+
+<nav class="fixed top-28 left-4 hidden w-96 pr-4 2xl:block">
+	<h2 class="mb-2 text-base font-bold">
+		<a href={`#${titleSlug}`}>Table of Contents</a>
+	</h2>
+	<ul class="space-y-1 text-sm">
+		{
+			headings.map((heading) => (
+				<li>
+					<a
+						href={`#${heading.slug}`}
+						class="toc-link block break-words text-gray-500 hover:text-gray-800"
+						data-slug={heading.slug}
+						style={{
+							marginLeft: `${(heading.depth - 2) * 16}px`,
+						}}
+					>
+						{heading.text}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>
+
+<script is:inline>
+	document.addEventListener("astro:page-load", () => {
+		const tocLinks = document.querySelectorAll(".toc-link");
+		const headings = Array.from(tocLinks)
+			.map((link) => {
+				const slug = link.getAttribute("data-slug");
+				if (!slug) return null;
+				return document.getElementById(slug);
+			})
+			.filter(Boolean);
+
+		if (headings.length === 0) return;
+
+		let lastActiveSlug = null;
+
+		const setActiveLink = (slug) => {
+			if (lastActiveSlug === slug) return;
+
+			tocLinks.forEach((link) => {
+				const linkSlug = link.getAttribute("data-slug");
+				if (slug && linkSlug === slug) {
+					link.classList.add("text-gray-800");
+					link.classList.remove("text-gray-500");
+				} else {
+					link.classList.remove("text-gray-800");
+					link.classList.add("text-gray-500");
+				}
+			});
+
+			lastActiveSlug = slug;
+		};
+
+		const updateActiveLinkOnScroll = () => {
+			const activationPoint = window.innerHeight * 0.25;
+			let currentActiveSlug = null;
+
+			for (const heading of headings) {
+				if (heading.getBoundingClientRect().top <= activationPoint) {
+					currentActiveSlug = heading.id;
+				} else {
+					break;
+				}
+			}
+
+			setActiveLink(currentActiveSlug);
+		};
+
+		tocLinks.forEach((link) => {
+			link.addEventListener("click", () => {
+				const clickedSlug = link.getAttribute("data-slug");
+				setActiveLink(clickedSlug);
+			});
+		});
+
+		window.addEventListener("scroll", updateActiveLinkOnScroll, {
+			passive: true,
+		});
+
+		updateActiveLinkOnScroll();
+	});
+</script>

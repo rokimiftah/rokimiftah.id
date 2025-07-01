@@ -1,0 +1,124 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+	--font-sans: "Open Sans", "sans-serif";
+	--font-onest: "Onest", "sans-serif";
+}
+
+/* Global styles */
+* {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+	display: none;
+}
+
+html {
+	overflow-y: scroll;
+	scroll-behavior: smooth;
+	scroll-padding-block-start: 1.5rem;
+}
+
+html,
+body {
+	@apply size-full;
+}
+
+body {
+	@apply flex flex-col bg-[#ffffff] font-sans text-[#46433b] antialiased;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+/* Layout components */
+header {
+	@apply top-0 right-0 left-0 m-5;
+}
+
+main {
+	@apply flex-1;
+}
+
+/* Typography */
+article {
+	@apply prose prose-headings:font-onest prose-headings:font-bold prose-headings:text-[#1a1916] prose-p:font-sans prose-p:text-[#46433b] prose-img:mx-auto prose-img:my-auto prose-img:rounded-lg max-w-full;
+}
+
+@layer utilities {
+	article a {
+		@apply rounded font-sans !text-[#46433b] not-italic underline underline-offset-2 transition-colors duration-200 ease-in-out;
+	}
+
+	article a:hover {
+		@apply rounded !bg-[#46433b] !text-[#ffffff] !no-underline;
+	}
+}
+
+/* Code frame */
+.frame-code {
+	@apply relative;
+}
+
+.copy-code {
+	@apply absolute top-[7px] right-1 cursor-pointer text-xs;
+}
+
+/* Table styles */
+table {
+	@apply block w-full max-w-fit overflow-x-auto whitespace-nowrap text-[#46433b];
+}
+
+th {
+	@apply font-semibold;
+}
+
+/* Blockquote styles */
+blockquote {
+	@apply border-[#46433b];
+}
+
+blockquote > p {
+	quotes: none;
+	@apply m-0 bg-slate-800 pl-2 not-italic;
+}
+
+blockquote > ul > li,
+blockquote > ul > li > p {
+	quotes: none;
+	@apply m-0 list-none;
+}
+
+blockquote ul,
+li {
+	@apply p-0.5 text-[#46433b];
+}
+
+/* Link styles */
+a {
+	@apply transition-colors duration-200 ease-in-out;
+}
+
+/* Miscellaneous */
+p:last-child {
+	@apply mb-0;
+}
+
+p > code,
+li > code {
+	@apply text-[#46433b];
+}
+
+li::marker {
+	@apply text-[#46433b];
+}
+
+html #back-to-top {
+	@apply pointer-events-none opacity-0;
+}
+
+html.scrolled #back-to-top {
+	@apply pointer-events-auto opacity-100;
+}
