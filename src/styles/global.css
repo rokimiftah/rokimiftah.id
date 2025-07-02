@@ -28,7 +28,7 @@ body {
 }
 
 body {
-	@apply flex flex-col font-sans text-[#46433b] antialiased;
+	@apply flex flex-col font-sans text-[#000000] antialiased;
 	background-color: #ffffff;
 	background-image:
 		linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
@@ -51,7 +51,7 @@ main {
 
 /* Typography */
 article {
-	@apply prose prose-headings:font-onest prose-headings:font-bold prose-headings:text-[#1a1916] prose-p:font-sans prose-p:text-[#46433b] prose-img:mx-auto prose-img:my-auto prose-img:rounded-lg max-w-full;
+	@apply prose prose-headings:font-onest prose-headings:font-bold prose-headings:text-[#000000] prose-p:font-sans prose-p:text-[#000000] prose-img:mx-auto prose-img:my-auto prose-img:rounded-lg max-w-full;
 }
 
 @layer utilities {
@@ -75,7 +75,7 @@ article {
 
 /* Table styles */
 table {
-	@apply block w-full max-w-fit overflow-x-auto whitespace-nowrap text-[#46433b];
+	@apply block w-full max-w-fit overflow-x-auto whitespace-nowrap text-[#000000];
 }
 
 th {
@@ -84,7 +84,7 @@ th {
 
 /* Blockquote styles */
 blockquote {
-	@apply border-[#46433b];
+	@apply border-[#000000];
 }
 
 blockquote > p {
@@ -100,7 +100,7 @@ blockquote > ul > li > p {
 
 blockquote ul,
 li {
-	@apply p-0.5 text-[#46433b];
+	@apply p-0.5 text-[#000000];
 }
 
 /* Link styles */
@@ -115,11 +115,11 @@ p:last-child {
 
 p > code,
 li > code {
-	@apply text-[#46433b];
+	@apply text-[#000000];
 }
 
 li::marker {
-	@apply text-[#46433b];
+	@apply text-[#000000];
 }
 
 html #back-to-top {
