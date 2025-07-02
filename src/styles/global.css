@@ -34,7 +34,6 @@ body {
 		linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
 		linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
 	background-size: 1.5rem 1.5rem;
-	/* background-size: 20px 20px; */
 	background-attachment: fixed;
 	-ms-overflow-style: none;
 	scrollbar-width: none;
