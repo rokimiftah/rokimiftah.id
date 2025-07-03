@@ -34,7 +34,7 @@ The first crucial move is making sure your [web app](https://rokimiftah.id) is p
 
 -- k6: [https://grafana.com/docs/k6/latest/set-up/install-k6/](https://grafana.com/docs/k6/latest/set-up/install-k6/)
 
--- Node.js: [https://nodejs.org/en/download/package-manager/current](https://nodejs.org/en/download/package-manager/current) 
+-- Node.js: [https://nodejs.org/en/download/package-manager/current](https://nodejs.org/en/download/package-manager/current)
 
 Make sure we have installed k6 and Node.js properly by using command:
 
@@ -98,7 +98,7 @@ touch minimal-test.js stress-test.js spike-test.js soak-test.js
 ```
 </CodeBlockFrame>
 
-Having formulated your comprehensive testing approach, the next phase entails transcribing your strategy into executable scripts. The k6 tool leverages JavaScript (or its superset, TypeScript) as the programming language for crafting test scripts, thereby offering accessibility to developers well-versed in these widely adopted languages. To illustrate, let us consider an exemplary script that emulates a straightforward user interaction scenario on a WordPress website:
+Having formulated your comprehensive testing approach, the next phase entails transcribing your strategy into executable scripts. The k6 tool leverages JavaScript (or its superset, TypeScript) as the programming language for crafting test scripts, thereby offering accessibility to developers well-versed in these widely adopted languages. To illustrate, let us consider an exemplary script that emulates a straightforward user interaction scenario on my website:
 
 <CodeBlockFrame title="minimal-test.js">
 ```js
@@ -257,7 +257,7 @@ k6 run minimal-test.js --out json=minimal-test.json
     - Network Behavior:
 
         -- The average time spent waiting for a server response (http_req_waiting) was 136.43ms, constituting the majority of the total request duration.
-            
+
         -- Initial connection times (http_req_connecting) were minimal, averaging just 318.26µs, indicating efficient connection reuse.
 
     - Data Transfer: The application transferred data at a rate of 16 kB/s received and 556 B/s sent, which appears appropriate for the nature of the requests.
