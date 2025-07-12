@@ -27,7 +27,7 @@ const { title, description } = Astro.props;
 	charset="UTF-8"
 	title={title}
 	description={description}
-	canonical={Astro.site}
+	canonical="https://rokimiftah.id"
 	extend={{
 		meta: [
 			{ name: "viewport", content: "width=device-width,initial-scale=1" },
@@ -58,8 +58,8 @@ const { title, description } = Astro.props;
 	set:html={JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "WebSite",
-		name: SITE.TITLE,
-		url: Astro.site,
+		name: "Roki Miftah Kamaludin",
+		url: "https://rokimiftah.id",
 	})}
 />
 
