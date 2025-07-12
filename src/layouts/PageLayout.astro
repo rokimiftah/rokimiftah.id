@@ -3,12 +3,12 @@ import Head from "@components/Head.astro";
 import TableOfContents from "@components/TableOfContents.astro";
 import type { MarkdownHeading } from "astro";
 
-interface Props {
+type Props = {
 	title: string;
 	description: string;
 	canonicalURL: string;
 	heading?: MarkdownHeading[];
-}
+};
 
 const { title, description, canonicalURL, heading } = Astro.props;
 ---
