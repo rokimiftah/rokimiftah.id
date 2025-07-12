@@ -4,6 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
+import critters from "astro-critters";
 
 export default defineConfig({
 	devToolbar: {
@@ -11,6 +12,9 @@ export default defineConfig({
 	},
 
 	integrations: [
+		critters({
+			Exclude: ["@fontsource"],
+		}),
 		mdx(),
 		sitemap({
 			lastmod: new Date(),
