@@ -5,7 +5,7 @@ import type { MarkdownHeading } from "astro";
 
 interface Props {
 	title: string;
-	heading: MarkdownHeading[];
+	heading?: MarkdownHeading[];
 }
 
 const { title, heading } = Astro.props;
