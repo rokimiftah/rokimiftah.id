@@ -6,17 +6,17 @@ import type { MarkdownHeading } from "astro";
 type Props = {
 	title: string;
 	description: string;
-	canonical: string;
+	url: URL;
 	heading?: MarkdownHeading[];
 };
 
-const { title, description, canonical, heading } = Astro.props;
+const { title, description, url, heading } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<Head title={title} description={description} canonical={canonical} />
+		<Head title={title} description={description} url={url} />
 	</head>
 	<body>
 		<main class="relative">

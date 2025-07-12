@@ -30,7 +30,7 @@ const { Content, headings } = await render(post);
 <PageLayout
 	title={post.data.title}
 	description={post.data.description}
-	canonical={`${Astro.site}`}
+	url={Astro.url}
 	heading={headings}
 >
 	<Container>

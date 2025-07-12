@@ -19,7 +19,7 @@ import { SITE } from "@config/consts";
 import { SEO } from "astro-seo";
 import { ClientRouter } from "astro:transitions";
 
-const { title, description } = Astro.props;
+const { title, description, url } = Astro.props;
 ---
 
 <!-- Global Metadata -->
@@ -27,7 +27,7 @@ const { title, description } = Astro.props;
 	charset="UTF-8"
 	title={title}
 	description={description}
-	canonical={Astro.site}
+	canonical={url ?? Astro.site}
 	extend={{
 		meta: [
 			{ name: "viewport", content: "width=device-width,initial-scale=1" },
