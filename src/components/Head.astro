@@ -1,18 +1,4 @@
 ---
-import "@fontsource/onest/500.css";
-import "@fontsource/onest/600.css";
-import "@fontsource/onest/700.css";
-import "@fontsource/onest/800.css";
-import "@fontsource/open-sans/500.css";
-import "@fontsource/open-sans/600.css";
-
-import onest500 from "@fontsource/onest/files/onest-latin-500-normal.woff2";
-import onest600 from "@fontsource/onest/files/onest-latin-600-normal.woff2";
-import onest700 from "@fontsource/onest/files/onest-latin-700-normal.woff2";
-import onest800 from "@fontsource/onest/files/onest-latin-800-normal.woff2";
-import sans500 from "@fontsource/open-sans/files/open-sans-latin-500-normal.woff2";
-import sans600 from "@fontsource/open-sans/files/open-sans-latin-600-normal.woff2";
-
 import "@styles/global.css";
 
 import { SITE } from "@config/consts";
@@ -42,13 +28,11 @@ const { title, description, url } = Astro.props;
 	titleTemplate={`%s - ${SITE.TITLE}`}
 />
 
-<!-- Font preloads -->
-<link rel="preload" href={onest500} as="font" type="font/woff2" crossorigin />
-<link rel="preload" href={onest600} as="font" type="font/woff2" crossorigin />
-<link rel="preload" href={onest700} as="font" type="font/woff2" crossorigin />
-<link rel="preload" href={onest800} as="font" type="font/woff2" crossorigin />
-<link rel="preload" href={sans500} as="font" type="font/woff2" crossorigin />
-<link rel="preload" href={sans600} as="font" type="font/woff2" crossorigin />
+<link rel="preconnect" href="https://fonts.bunny.net" />
+<link
+	href="https://fonts.bunny.net/css?family=onest:500,600,700,800|open-sans:500,600"
+	rel="stylesheet"
+/>
 
 <ClientRouter />
 
