@@ -36,7 +36,7 @@ export default defineConfig({
 	vite: {
 		plugins: [tailwindcss()],
 		server: {
-			allowedHosts: ["dev.rokimiftah.id","1bvxmcbh6pcnwo5zj6mxb1wzq.nglocalhost.com"],
+			allowedHosts: ["dev.rokimiftah.id"],
 		},
 	},
 });
