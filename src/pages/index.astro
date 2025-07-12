@@ -4,9 +4,11 @@ import Container from "@components/Container.astro";
 import Link from "@components/Link.astro";
 import { HOME, SITE, SOCIALS } from "@config/consts";
 import HomeLayout from "@layouts/HomeLayout.astro";
-import { getCollection } from "astro:content";
+import { getCollection, type CollectionEntry } from "astro:content";
 
-const blog = (await getCollection("blog"))
+type BlogPost = CollectionEntry<"blog">;
+
+const blog = ((await getCollection("blog")) as BlogPost[])
 	.filter((post) => !post.data.draft)
 	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
 	.slice(0, SITE.NUM_POSTS_ON_HOMEPAGE);

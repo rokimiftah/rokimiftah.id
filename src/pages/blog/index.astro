@@ -6,12 +6,11 @@ import { BLOG } from "@config/consts";
 import PageLayout from "@layouts/PageLayout.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 
-const data: CollectionEntry<"blog">[] = (await getCollection("blog"))
-	.filter((post: CollectionEntry<"blog">) => !post.data.draft)
-	.sort(
-		(a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) =>
-			b.data.date.valueOf() - a.data.date.valueOf()
-	);
+type BlogPost = CollectionEntry<"blog">;
+
+const data = ((await getCollection("blog")) as BlogPost[])
+	.filter((post) => !post.data.draft)
+	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
 type Acc = {
 	[year: string]: CollectionEntry<"blog">[];
