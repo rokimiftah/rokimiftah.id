@@ -1,6 +1,54 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@font-face {
+	font-family: "Onest";
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+	src: url("/fonts/onest-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Onest";
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+	src: url("/fonts/onest-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Onest";
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+	src: url("/fonts/onest-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Onest";
+	font-weight: 800;
+	font-style: normal;
+	font-display: swap;
+	src: url("/fonts/onest-latin-800-normal.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Open Sans";
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+	src: url("/fonts/open-sans-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Open Sans";
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+	src: url("/fonts/open-sans-latin-600-normal.woff2") format("woff2");
+}
+
 @theme {
 	--font-sans: "Open Sans", "sans-serif";
 	--font-onest: "Onest", "sans-serif";

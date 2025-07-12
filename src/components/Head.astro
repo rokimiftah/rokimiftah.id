@@ -28,10 +28,47 @@ const { title, description, url } = Astro.props;
 	titleTemplate={`%s - ${SITE.TITLE}`}
 />
 
-<link rel="preconnect" href="https://fonts.bunny.net" />
 <link
-	href="https://fonts.bunny.net/css?family=onest:500,600,700,800|open-sans:500,600&display=swap"
-	rel="stylesheet"
+	rel="preload"
+	href="/fonts/onest-latin-500-normal.woff2"
+	as="font"
+	type="font/woff2"
+	crossorigin
+/>
+<link
+	rel="preload"
+	href="/fonts/onest-latin-600-normal.woff2"
+	as="font"
+	type="font/woff2"
+	crossorigin
+/>
+<link
+	rel="preload"
+	href="/fonts/onest-latin-700-normal.woff2"
+	as="font"
+	type="font/woff2"
+	crossorigin
+/>
+<link
+	rel="preload"
+	href="/fonts/onest-latin-800-normal.woff2"
+	as="font"
+	type="font/woff2"
+	crossorigin
+/>
+<link
+	rel="preload"
+	href="/fonts/open-sans-latin-500-normal.woff2"
+	as="font"
+	type="font/woff2"
+	crossorigin
+/>
+<link
+	rel="preload"
+	href="/fonts/open-sans-latin-600-normal.woff2"
+	as="font"
+	type="font/woff2"
+	crossorigin
 />
 
 <ClientRouter />
