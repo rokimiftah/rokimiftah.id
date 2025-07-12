@@ -82,7 +82,9 @@ const blog = (await getCollection("blog"))
 								<Link
 									href={SOCIAL.HREF}
 									external
-									aria-label={`${SITE.NAME} on ${SOCIAL.NAME}`}
+									aria-label={`
+										${SITE.TITLE} on ${SOCIAL.NAME}
+									`}
 								>
 									{SOCIAL.NAME}
 								</Link>
