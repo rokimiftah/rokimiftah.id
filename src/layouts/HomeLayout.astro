@@ -2,17 +2,22 @@
 import Head from "@components/Head.astro";
 
 type Props = {
-	title?: string;
+	title: string;
 	description: string;
+	canonicalURL: string;
 };
 
-const { title, description } = Astro.props;
+const { title, description, canonicalURL } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<Head title={title} description={description} />
+		<Head
+			title={title}
+			description={description}
+			canonicalURL={canonicalURL}
+		/>
 	</head>
 	<body>
 		<main>

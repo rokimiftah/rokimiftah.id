@@ -30,7 +30,11 @@ const years = Object.keys(posts).sort(
 );
 ---
 
-<PageLayout title={BLOG.TITLE}>
+<PageLayout
+	title={BLOG.TITLE}
+	description={BLOG.DESCRIPTION}
+	canonicalURL={`${Astro.site}blog`}
+>
 	<Container>
 		<div class="space-y-5">
 			<div>

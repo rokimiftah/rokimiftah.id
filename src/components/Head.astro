@@ -38,8 +38,8 @@ const { title, description } = Astro.props;
 			{ rel: "sitemap", href: "/sitemap-index.xml" },
 		],
 	}}
-	titleDefault={SITE.NAME}
-	titleTemplate={`%s - ${SITE.NAME}`}
+	titleDefault={SITE.TITLE}
+	titleTemplate={`%s - ${SITE.TITLE}`}
 />
 
 <!-- Font preloads -->
@@ -58,7 +58,7 @@ const { title, description } = Astro.props;
 	set:html={JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "WebSite",
-		name: SITE.NAME,
+		name: SITE.TITLE,
 		url: Astro.site,
 	})}
 />

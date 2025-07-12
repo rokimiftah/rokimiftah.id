@@ -27,7 +27,12 @@ const project = Astro.props;
 const { Content, headings } = await render(project);
 ---
 
-<PageLayout title={project.data.title} heading={headings}>
+<PageLayout
+	title={project.data.title}
+	description={project.data.description}
+	canonicalURL={`${Astro.site}projects/${project.id}`}
+	heading={headings}
+>
 	<Container>
 		<div>
 			<BackToPrev href="/projects"> Projects </BackToPrev>

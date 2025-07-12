@@ -2,7 +2,7 @@
 import ArrowCard from "@components/ArrowCard.astro";
 import Container from "@components/Container.astro";
 import Link from "@components/Link.astro";
-import { HOME, SITE, SOCIALS } from "@config/consts";
+import { SITE, SOCIALS } from "@config/consts";
 import HomeLayout from "@layouts/HomeLayout.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 
@@ -19,7 +19,11 @@ const blog = ((await getCollection("blog")) as BlogPost[])
 // 	.slice(0, SITE.NUM_PROJECTS_ON_HOMEPAGE);
 ---
 
-<HomeLayout description={HOME.DESCRIPTION}>
+<HomeLayout
+	title={SITE.TITLE}
+	description={SITE.DESCRIPTION}
+	canonicalURL={`${Astro.site}`}
+>
 	<Container>
 		<div class="space-y-16">
 			<section>

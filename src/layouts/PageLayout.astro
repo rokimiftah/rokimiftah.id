@@ -5,16 +5,22 @@ import type { MarkdownHeading } from "astro";
 
 interface Props {
 	title: string;
+	description: string;
+	canonicalURL: string;
 	heading?: MarkdownHeading[];
 }
 
-const { title, heading } = Astro.props;
+const { title, description, canonicalURL, heading } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<Head title={title} />
+		<Head
+			title={title}
+			description={description}
+			canonicalURL={canonicalURL}
+		/>
 	</head>
 	<body>
 		<main class="relative">

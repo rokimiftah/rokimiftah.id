@@ -27,7 +27,12 @@ const post = Astro.props;
 const { Content, headings } = await render(post);
 ---
 
-<PageLayout title={post.data.title} heading={headings}>
+<PageLayout
+	title={post.data.title}
+	description={post.data.description}
+	canonicalURL={`${Astro.site}blog/${post.id}`}
+	heading={headings}
+>
 	<Container>
 		<div>
 			<BackToPrev href="/blog"> Blog </BackToPrev>

@@ -13,7 +13,11 @@ const projects = ((await getCollection("projects")) as Projects[])
 	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<PageLayout title={PROJECTS.TITLE}>
+<PageLayout
+	title={PROJECTS.TITLE}
+	description={PROJECTS.DESCRIPTION}
+	canonicalURL={`${Astro.site}projects`}
+>
 	<Container>
 		<div class="space-y-5">
 			<div>

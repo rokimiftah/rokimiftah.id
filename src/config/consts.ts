@@ -1,15 +1,11 @@
 import type { Metadata, Site, Socials } from "@types";
 
 export const SITE: Site = {
-	NAME: "Roki Miftah Kamaludin",
+	TITLE: "Roki Miftah Kamaludin",
+	DESCRIPTION: "Roki Miftah Kamaludin personal blog and portfolio.",
 	EMAIL: "me@rokimiftah.id",
 	NUM_POSTS_ON_HOMEPAGE: 2,
 	NUM_PROJECTS_ON_HOMEPAGE: 2,
-};
-
-export const HOME: Metadata = {
-	TITLE: "Home",
-	DESCRIPTION: "Roki Miftah Kamaludin personal blog and portfolio.",
 };
 
 export const BLOG: Metadata = {
