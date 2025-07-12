@@ -16,7 +16,7 @@ const projects = ((await getCollection("projects")) as Projects[])
 <PageLayout
 	title={PROJECTS.TITLE}
 	description={PROJECTS.DESCRIPTION}
-	canonicalURL="https://rokimiftah.id"
+	canonical={`${Astro.site}`}
 >
 	<Container>
 		<div class="space-y-5">
