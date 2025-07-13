@@ -10,8 +10,6 @@ export default defineConfig({
 		enabled: false,
 	},
 
-	prefetch: false,
-
 	integrations: [
 		mdx(),
 		sitemap({
