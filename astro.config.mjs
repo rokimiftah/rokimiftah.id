@@ -11,6 +11,10 @@ const aurora = JSON.parse(
 );
 
 export default defineConfig({
+	build: {
+		inlineStylesheets: "auto",
+	},
+
 	devToolbar: {
 		enabled: false,
 	},
