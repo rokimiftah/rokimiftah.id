@@ -43,6 +43,9 @@ export default defineConfig({
 	trailingSlash: "never",
 
 	vite: {
+		build: {
+			minify: "esbuild",
+		},
 		plugins: [tailwindcss()],
 		server: {
 			allowedHosts: ["dev.rokimiftah.id"],
