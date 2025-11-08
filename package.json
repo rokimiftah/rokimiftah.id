@@ -1,39 +1,36 @@
 {
-	"name": "rokimiftah.id",
-	"type": "module",
-	"scripts": {
-		"astro": "bunx --bun astro",
-		"build": "bunx --bun astro build",
-		"dev": "bunx --bun astro dev",
-		"preview": "bunx --bun astro preview"
-	},
-	"dependencies": {
-		"@astrojs/mdx": "^4.3.1",
-		"@astrojs/sitemap": "^3.4.1",
-		"@tailwindcss/typography": "^0.5.16",
-		"@tailwindcss/vite": "^4.1.11",
-		"astro": "^5.12.0",
-		"astro-seo": "^0.8.4",
-		"clsx": "^2.1.1",
-		"sharp": "^0.33.5",
-		"tailwind-merge": "^2.6.0",
-		"tailwindcss": "^4.1.11",
-		"typescript": "^5.8.3"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.1.2",
-		"prettier": "^3.6.2",
-		"prettier-plugin-astro": "^0.14.1",
-		"prettier-plugin-astro-organize-imports": "^0.4.11",
-		"prettier-plugin-tailwindcss": "^0.6.14",
-		"wrangler": "^4.25.0"
-	},
-	"trustedDependencies": [
-		"@biomejs/biome",
-		"@parcel/watcher",
-		"@tailwindcss/oxide",
-		"esbuild",
-		"sharp",
-		"workerd"
-	]
+  "name": "rokimiftah.id",
+  "type": "module",
+  "scripts": {
+    "astro": "bunx --bun astro",
+    "build": "bunx --bun astro build",
+    "dev": "bunx --bun astro dev",
+    "format": "prettier --write .",
+    "format:lint:typecheck": "bun run format && bun run lint:typecheck",
+    "lint": "biome check --write .",
+    "lint:typecheck": "bun run lint && bun run typecheck",
+    "preview": "bunx --bun astro preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.10",
+    "@astrojs/sitemap": "^3.6.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.1.17",
+    "astro": "^5.15.4",
+    "astro-seo": "^0.8.4",
+    "clsx": "^2.1.1",
+    "sharp": "^0.34.5",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.4",
+    "prettier": "^3.6.2",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-astro-organize-imports": "^0.4.11",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "wrangler": "^4.46.0"
+  }
 }
