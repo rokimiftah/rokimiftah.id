@@ -1,22 +1,18 @@
 {
-	"astroOrganizeImportsMode": "All",
+  "astroOrganizeImportsMode": "All",
 
-	"plugins": [
-		"prettier-plugin-astro",
-		"prettier-plugin-tailwindcss",
-		"prettier-plugin-astro-organize-imports"
-	],
+  "overrides": [
+    {
+      "files": "*.astro",
+      "options": {
+        "parser": "astro"
+      }
+    }
+  ],
 
-	"overrides": [
-		{
-			"files": "*.astro",
-			"options": {
-				"parser": "astro"
-			}
-		}
-	],
+  "plugins": ["prettier-plugin-astro", "prettier-plugin-tailwindcss", "prettier-plugin-astro-organize-imports"],
 
-	"tabWidth": 4,
+  "printWidth": 130,
 
-	"useTabs": true
+  "useTabs": false
 }
