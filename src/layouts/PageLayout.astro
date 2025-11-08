@@ -11,6 +11,7 @@ type Props = {
 };
 
 const { title, description, url, heading } = Astro.props;
+const tocHeadings: MarkdownHeading[] = heading ?? [];
 ---
 
 <!doctype html>
@@ -21,7 +22,7 @@ const { title, description, url, heading } = Astro.props;
   <body>
     <main class="relative">
       <slot />
-      {heading && <TableOfContents headings={heading} title={title} />}
+      {tocHeadings.length >= 2 && <TableOfContents headings={tocHeadings} title={title} />}
     </main>
   </body>
 </html>
