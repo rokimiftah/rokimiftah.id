@@ -1,41 +1,51 @@
 {
-	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 
-	"formatter": {
-		"enabled": false
-	},
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
 
-	"linter": {
-		"rules": {
-			"recommended": true
-		}
-	},
+  "files": {
+    "includes": ["**", "!**/.astro", "!**/dist", "!**/node_modules"]
+  },
 
-	"overrides": [
-		{
-			"assist": {
-				"actions": {
-					"source": {
-						"organizeImports": "off"
-					}
-				}
-			},
+  "formatter": {
+    "enabled": false
+  },
 
-			"includes": ["**/*.astro"],
+  "linter": {
+    "rules": {
+      "recommended": true
+    }
+  },
 
-			"linter": {
-				"rules": {
-					"style": {
-						"useConst": "off",
-						"useImportType": "off"
-					},
+  "overrides": [
+    {
+      "assist": {
+        "actions": {
+          "source": {
+            "organizeImports": "off"
+          }
+        }
+      },
 
-					"correctness": {
-						"noUnusedImports": "off",
-						"noUnusedVariables": "off"
-					}
-				}
-			}
-		}
-	]
+      "includes": ["**/*.astro"],
+
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          },
+
+          "style": {
+            "useConst": "off",
+            "useImportType": "off"
+          }
+        }
+      }
+    }
+  ]
 }

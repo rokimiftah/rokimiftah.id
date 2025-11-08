@@ -6,164 +6,124 @@ import { SEO } from "astro-seo";
 import { ClientRouter } from "astro:transitions";
 
 const { title, description, url } = Astro.props;
+const pageTitle = title ?? SITE.TITLE;
+const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : undefined;
 ---
 
 <!-- Global Metadata -->
 <SEO
-	charset="UTF-8"
-	title={title}
-	description={description}
-	canonical={url ?? Astro.site}
-	extend={{
-		meta: [
-			{ name: "viewport", content: "width=device-width,initial-scale=1" },
-			{ name: "generator", content: `${Astro.generator}` },
-		],
-		link: [
-			{ rel: "icon", href: "https://cdn.rokimiftah.id/favicon.ico" },
-			{ rel: "sitemap", href: "/sitemap-index.xml" },
-		],
-	}}
-	titleDefault={SITE.TITLE}
-	titleTemplate={`%s - ${SITE.TITLE}`}
+  charset="UTF-8"
+  title={pageTitle}
+  description={description}
+  canonical={url ?? Astro.site}
+  extend={{
+    meta: [
+      { name: "viewport", content: "width=device-width,initial-scale=1" },
+      { name: "generator", content: `${Astro.generator}` },
+    ],
+    link: [
+      { rel: "icon", href: "https://cdn.rokimiftah.id/favicon.ico" },
+      { rel: "sitemap", href: "/sitemap-index.xml" },
+    ],
+  }}
+  titleDefault={SITE.TITLE}
+  titleTemplate={titleTemplate}
 />
 
-<link
-	rel="preload"
-	href="/fonts/onest-latin-500-normal.woff2"
-	as="font"
-	type="font/woff2"
-	crossorigin
-/>
-<link
-	rel="preload"
-	href="/fonts/onest-latin-600-normal.woff2"
-	as="font"
-	type="font/woff2"
-	crossorigin
-/>
-<link
-	rel="preload"
-	href="/fonts/onest-latin-700-normal.woff2"
-	as="font"
-	type="font/woff2"
-	crossorigin
-/>
-<link
-	rel="preload"
-	href="/fonts/onest-latin-800-normal.woff2"
-	as="font"
-	type="font/woff2"
-	crossorigin
-/>
-<link
-	rel="preload"
-	href="/fonts/open-sans-latin-500-normal.woff2"
-	as="font"
-	type="font/woff2"
-	crossorigin
-/>
-<link
-	rel="preload"
-	href="/fonts/open-sans-latin-600-normal.woff2"
-	as="font"
-	type="font/woff2"
-	crossorigin
-/>
+<link rel="preload" href="/fonts/onest-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/onest-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/onest-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/onest-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/open-sans-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/fonts/open-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
 
 <script
-	is:inline
-	type="application/ld+json"
-	set:html={JSON.stringify({
-		"@context": "https://schema.org",
-		"@type": "WebSite",
-		name: SITE.TITLE,
-		url: Astro.site,
-	})}
+  is:inline
+  type="application/ld+json"
+  set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE.TITLE,
+    url: Astro.site,
+  })}
 />
 
 <ClientRouter />
 
 <script>
-	const copyIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" color="#ffffff" fill="none"><path d="M3.5 9.36842C3.5 5.89491 3.5 4.15816 4.52513 3.07908C5.55025 2 7.20017 2 10.5 2H13.5C16.7998 2 18.4497 2 19.4749 3.07908C20.5 4.15816 20.5 5.89491 20.5 9.36842V14.6316C20.5 18.1051 20.5 19.8418 19.4749 20.9209C18.4497 22 16.7998 22 13.5 22H10.5C7.20017 22 5.55025 22 4.52513 20.9209C3.5 19.8418 3.5 18.1051 3.5 14.6316V9.36842Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 2L8.0822 2.4932C8.28174 3.69044 8.38151 4.28906 8.80113 4.64453C9.22075 5 9.82762 5 11.0414 5H12.9586C14.1724 5 14.7793 5 15.1989 4.64453C15.6185 4.28906 15.7183 3.69044 15.9178 2.4932L16 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16H12M8 11H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+  const copyIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" color="#ffffff" fill="none"><path d="M3.5 9.36842C3.5 5.89491 3.5 4.15816 4.52513 3.07908C5.55025 2 7.20017 2 10.5 2H13.5C16.7998 2 18.4497 2 19.4749 3.07908C20.5 4.15816 20.5 5.89491 20.5 9.36842V14.6316C20.5 18.1051 20.5 19.8418 19.4749 20.9209C18.4497 22 16.7998 22 13.5 22H10.5C7.20017 22 5.55025 22 4.52513 20.9209C3.5 19.8418 3.5 18.1051 3.5 14.6316V9.36842Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 2L8.0822 2.4932C8.28174 3.69044 8.38151 4.28906 8.80113 4.64453C9.22075 5 9.82762 5 11.0414 5H12.9586C14.1724 5 14.7793 5 15.1989 4.64453C15.6185 4.28906 15.7183 3.69044 15.9178 2.4932L16 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16H12M8 11H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 
-	const copyIconSuccess = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" color="#ffffff" fill="none"><path d="M3 13.3333C3 13.3333 4.5 14 6.5 17C6.5 17 6.78485 16.5192 7.32133 15.7526M17 6C14.7085 7.14577 12.3119 9.55181 10.3879 11.8223" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 13.3333C8 13.3333 9.5 14 11.5 17C11.5 17 17 8.5 22 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const copyIconSuccess = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" color="#ffffff" fill="none"><path d="M3 13.3333C3 13.3333 4.5 14 6.5 17C6.5 17 6.78485 16.5192 7.32133 15.7526M17 6C14.7085 7.14577 12.3119 9.55181 10.3879 11.8223" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 13.3333C8 13.3333 9.5 14 11.5 17C11.5 17 17 8.5 22 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-	function handleCopyCode(button: HTMLElement, code: string) {
-		navigator.clipboard
-			.writeText(code)
-			.then(() => {
-				button.innerHTML = copyIconSuccess;
-				setTimeout(() => {
-					button.innerHTML = copyIcon;
-				}, 1000);
-			})
-			.catch((err) => {
-				console.error("Failed to copy code: ", err);
-				alert("Failed to copy code. Please try again.");
-			});
-	}
+  function handleCopyCode(button: HTMLElement, code: string) {
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        button.innerHTML = copyIconSuccess;
+        setTimeout(() => {
+          button.innerHTML = copyIcon;
+        }, 1000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy code: ", err);
+        alert("Failed to copy code. Please try again.");
+      });
+  }
 
-	function initializeCopyButtons() {
-		const codeBlocks = document.querySelectorAll(".frame-code");
+  function initializeCopyButtons() {
+    const codeBlocks = document.querySelectorAll(".frame-code");
 
-		codeBlocks.forEach((codeBlock) => {
-			const button = codeBlock.querySelector(
-				".copy-code"
-			) as HTMLButtonElement | null;
-			const codeElement = codeBlock.querySelector(
-				"code"
-			) as HTMLElement | null;
+    codeBlocks.forEach((codeBlock) => {
+      const button = codeBlock.querySelector(".copy-code") as HTMLButtonElement | null;
+      const codeElement = codeBlock.querySelector("code") as HTMLElement | null;
 
-			if (button && codeElement) {
-				const code = codeElement.innerText.trim();
-				button.addEventListener("click", () =>
-					handleCopyCode(button, code)
-				);
-			}
-		});
-	}
+      if (button && codeElement) {
+        const code = codeElement.innerText.trim();
+        button.addEventListener("click", () => handleCopyCode(button, code));
+      }
+    });
+  }
 
-	function setLinkTargets(selectors: string[]): void {
-		selectors.forEach((selector) => {
-			const links = document.querySelectorAll(selector);
-			links.forEach((link) => {
-				if (link instanceof HTMLAnchorElement) {
-					link.target = "_blank";
-				}
-			});
-		});
-	}
+  function setLinkTargets(selectors: string[]): void {
+    selectors.forEach((selector) => {
+      const links = document.querySelectorAll(selector);
+      links.forEach((link) => {
+        if (link instanceof HTMLAnchorElement) {
+          link.target = "_blank";
+        }
+      });
+    });
+  }
 
-	function onScroll() {
-		if (window.scrollY > 0) {
-			document.documentElement.classList.add("scrolled");
-		} else {
-			document.documentElement.classList.remove("scrolled");
-		}
-	}
+  function onScroll() {
+    if (window.scrollY > 0) {
+      document.documentElement.classList.add("scrolled");
+    } else {
+      document.documentElement.classList.remove("scrolled");
+    }
+  }
 
-	function scrollToTop(event: MouseEvent): void {
-		event.preventDefault();
-		window.scrollTo({
-			top: 0,
-			behavior: "smooth",
-		});
-	}
+  function scrollToTop(event: MouseEvent): void {
+    event.preventDefault();
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
 
-	function initialize() {
-		initializeCopyButtons();
+  function initialize() {
+    initializeCopyButtons();
 
-		setLinkTargets(["article > p > a", "article > ul > li > a"]);
+    setLinkTargets(["article > p > a", "article > ul > li > a"]);
 
-		document.addEventListener("scroll", onScroll);
+    document.addEventListener("scroll", onScroll);
 
-		const backToTop = document.getElementById("back-to-top");
-		backToTop?.addEventListener("click", (event) => scrollToTop(event));
+    const backToTop = document.getElementById("back-to-top");
+    backToTop?.addEventListener("click", (event) => scrollToTop(event));
 
-		onScroll();
-	}
+    onScroll();
+  }
 
-	document.addEventListener("DOMContentLoaded", initialize);
-	document.addEventListener("astro:page-load", initialize);
+  document.addEventListener("DOMContentLoaded", initialize);
+  document.addEventListener("astro:page-load", initialize);
 </script>

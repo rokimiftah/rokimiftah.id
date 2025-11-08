@@ -9,101 +9,91 @@ import { getCollection, type CollectionEntry } from "astro:content";
 type BlogPost = CollectionEntry<"blog">;
 
 const blog = ((await getCollection("blog")) as BlogPost[])
-	.filter((post) => !post.data.draft)
-	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-	.slice(0, SITE.NUM_POSTS_ON_HOMEPAGE);
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, SITE.NUM_POSTS_ON_HOMEPAGE);
 
-// const projects = (await getCollection("projects"))
-// 	.filter((project) => !project.data.draft)
-// 	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-// 	.slice(0, SITE.NUM_PROJECTS_ON_HOMEPAGE);
+const projects = (await getCollection("projects"))
+  .filter((project) => !project.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, SITE.NUM_PROJECTS_ON_HOMEPAGE);
 ---
 
 <HomeLayout description={SITE.DESCRIPTION} canonical={`${Astro.site}`}>
-	<Container>
-		<div class="space-y-16">
-			<section>
-				<article>
-					<p class="m-0 p-0">
-						A lifelong learner with a passion for keeping up with
-						the latest trends and developments in the ever-evolving
-						field of software engineering.
-					</p>
-				</article>
-			</section>
+  <Container>
+    <div class="space-y-16">
+      <section>
+        <article>
+          <p class="m-0 p-0">
+            A lifelong learner with a passion for keeping up with the latest trends and developments in the ever-evolving field of
+            software engineering.
+          </p>
+        </article>
+      </section>
 
-			<section class="space-y-6">
-				<div
-					class="flex flex-wrap items-center justify-between gap-y-2"
-				>
-					<h5 class="font-semibold text-[#000000]">Blog</h5>
-					<Link href="/blog"> See all posts </Link>
-				</div>
-				<ul class="flex flex-col gap-4">
-					{
-						blog.map((post) => (
-							<li>
-								<ArrowCard entry={post} />
-							</li>
-						))
-					}
-				</ul>
-			</section>
+      <section class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-y-2">
+          <h5 class="font-semibold text-[#000000]">Blog</h5>
+          <Link href="/blog"> See all posts </Link>
+        </div>
+        <ul class="flex flex-col gap-4">
+          {
+            blog.map((post) => (
+              <li>
+                <ArrowCard entry={post} />
+              </li>
+            ))
+          }
+        </ul>
+      </section>
 
-			<!-- <section class="space-y-6">
-				<div
-					class="flex flex-wrap items-center justify-between gap-y-2"
-				>
-					<h5 class="font-semibold text-black">Projects</h5>
-					<Link href="/projects"> See all projects </Link>
-				</div>
-				<ul class="flex flex-col gap-4">
-					{
-						projects.map((project) => (
-							<li>
-								<ArrowCard entry={project} />
-							</li>
-						))
-					}
-				</ul>
-			</section> -->
+      <section class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-y-2">
+          <h5 class="font-semibold text-black">Projects</h5>
+          <Link href="/projects"> See all projects </Link>
+        </div>
+        <ul class="flex flex-col gap-4">
+          {
+            projects.map((project) => (
+              <li>
+                <ArrowCard entry={project} />
+              </li>
+            ))
+          }
+        </ul>
+      </section>
 
-			<section class="space-y-6">
-				<h5 class="font-semibold text-[#000000]">Let's connect</h5>
-				<article>
-					<p>
-						If you want to get in touch with me about something or
-						just to say hi, reach out on social media or send me an
-						email.
-					</p>
-				</article>
-				<ul class="flex flex-wrap gap-2">
-					{
-						SOCIALS.map((SOCIAL) => (
-							<li class="flex gap-x-2 text-nowrap">
-								<Link
-									href={SOCIAL.HREF}
-									external
-									aria-label={`
+      <section class="space-y-6">
+        <h5 class="font-semibold text-[#000000]">Let's connect</h5>
+        <article>
+          <p>
+            If you want to get in touch with me about something or just to say hi, reach out on social media or send me an email.
+          </p>
+        </article>
+        <ul class="flex flex-wrap gap-2">
+          {
+            SOCIALS.map((SOCIAL) => (
+              <li class="flex gap-x-2 text-nowrap">
+                <Link
+                  href={SOCIAL.HREF}
+                  external
+                  aria-label={`
 										${SITE.TITLE} on ${SOCIAL.NAME}
 									`}
-								>
-									{SOCIAL.NAME}
-								</Link>
-								{"•"}
-							</li>
-						))
-					}
-					<li class="line-clamp-1">
-						<Link
-							href={`mailto:${SITE.EMAIL}`}
-							aria-label={"Email Roki Miftah Kamaludin"}
-						>
-							{"Email"}
-						</Link>
-					</li>
-				</ul>
-			</section>
-		</div>
-	</Container>
+                >
+                  {SOCIAL.NAME}
+                </Link>
+                {"•"}
+              </li>
+            ))
+          }
+          <li class="line-clamp-1">
+            <Link href={`mailto:${SITE.EMAIL}`} aria-label={"Email Roki Miftah Kamaludin"}>
+              {"Email"}
+            </Link>
+          </li>
+        </ul>
+      </section>
+    </div>
+  </Container>
 </HomeLayout>

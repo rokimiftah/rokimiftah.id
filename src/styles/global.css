@@ -2,171 +2,170 @@
 @plugin "@tailwindcss/typography";
 
 @font-face {
-	font-family: "Onest";
-	font-weight: 500;
-	font-style: normal;
-	font-display: swap;
-	src: url("/fonts/onest-latin-500-normal.woff2") format("woff2");
+  font-family: "Onest";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/onest-latin-500-normal.woff2") format("woff2");
 }
 
 @font-face {
-	font-family: "Onest";
-	font-weight: 600;
-	font-style: normal;
-	font-display: swap;
-	src: url("/fonts/onest-latin-600-normal.woff2") format("woff2");
+  font-family: "Onest";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/onest-latin-600-normal.woff2") format("woff2");
 }
 
 @font-face {
-	font-family: "Onest";
-	font-weight: 700;
-	font-style: normal;
-	font-display: swap;
-	src: url("/fonts/onest-latin-700-normal.woff2") format("woff2");
+  font-family: "Onest";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/onest-latin-700-normal.woff2") format("woff2");
 }
 
 @font-face {
-	font-family: "Onest";
-	font-weight: 800;
-	font-style: normal;
-	font-display: swap;
-	src: url("/fonts/onest-latin-800-normal.woff2") format("woff2");
+  font-family: "Onest";
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/onest-latin-800-normal.woff2") format("woff2");
 }
 
 @font-face {
-	font-family: "Open Sans";
-	font-weight: 500;
-	font-style: normal;
-	font-display: swap;
-	src: url("/fonts/open-sans-latin-500-normal.woff2") format("woff2");
+  font-family: "Open Sans";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/open-sans-latin-500-normal.woff2") format("woff2");
 }
 
 @font-face {
-	font-family: "Open Sans";
-	font-weight: 600;
-	font-style: normal;
-	font-display: swap;
-	src: url("/fonts/open-sans-latin-600-normal.woff2") format("woff2");
+  font-family: "Open Sans";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/open-sans-latin-600-normal.woff2") format("woff2");
 }
 
 @theme {
-	--font-sans: "Open Sans", "sans-serif";
-	--font-onest: "Onest", "sans-serif";
+  --font-sans: "Open Sans", "sans-serif";
+  --font-onest: "Onest", "sans-serif";
 }
 
 /* Global styles */
 * {
-	scrollbar-width: none;
-	-ms-overflow-style: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 *::-webkit-scrollbar {
-	display: none;
+  display: none;
 }
 
 html {
-	overflow-y: scroll;
-	scroll-behavior: smooth;
-	scroll-padding-block-start: 1.5rem;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+  scroll-padding-block-start: 1.5rem;
 }
 
 html,
 body {
-	@apply size-full;
+  @apply size-full;
 }
 
 body {
-	@apply flex flex-col bg-[#ffffff] font-sans text-[#46433b] antialiased;
-	-ms-overflow-style: none;
-	scrollbar-width: none;
+  @apply flex flex-col bg-[#ffffff] font-sans text-[#46433b] antialiased;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Layout components */
 header {
-	@apply top-0 right-0 left-0 m-5;
+  @apply top-0 right-0 left-0 m-5;
 }
 
 main {
-	@apply flex-1;
+  @apply flex-1;
+}
+
+a {
+  @apply transition-colors duration-200 ease-in-out;
 }
 
 /* Typography */
 article {
-	@apply prose prose-headings:font-onest prose-headings:font-bold prose-headings:text-[#000000] prose-p:font-sans prose-p:text-[#000000] prose-img:mx-auto prose-img:my-auto prose-img:rounded-lg max-w-full;
+  @apply prose prose-headings:font-onest prose-headings:font-bold prose-headings:text-[#000000] prose-p:font-sans prose-p:text-[#000000] prose-img:mx-auto prose-img:my-auto prose-img:rounded-lg max-w-full;
 }
 
 @layer utilities {
-	article a {
-		@apply rounded font-sans !text-[#46433b] not-italic underline underline-offset-2 transition-colors duration-200 ease-in-out;
-	}
+  article a {
+    @apply rounded font-sans text-[#46433b]! not-italic underline underline-offset-2 transition-colors duration-200 ease-in-out;
+  }
 
-	article a:hover {
-		@apply rounded !bg-[#46433b] !text-[#ffffff] !no-underline;
-	}
+  article a:hover {
+    @apply rounded bg-[#46433b]! text-[#ffffff]! no-underline!;
+  }
 }
 
 /* Code frame */
 .frame-code {
-	@apply relative;
+  @apply relative;
 }
 
 .copy-code {
-	@apply absolute top-[7px] right-1 cursor-pointer text-xs;
+  @apply absolute top-[7px] right-1 cursor-pointer text-xs;
 }
 
 /* Table styles */
 table {
-	@apply block w-full max-w-fit overflow-x-auto whitespace-nowrap text-[#000000];
+  @apply block w-full max-w-fit overflow-x-auto whitespace-nowrap text-[#000000];
 }
 
 th {
-	@apply font-semibold;
+  @apply font-semibold;
 }
 
 /* Blockquote styles */
 blockquote {
-	@apply border-[#000000];
+  @apply border-[#000000];
 }
 
 blockquote > p {
-	quotes: none;
-	@apply m-0 bg-slate-800 pl-2 not-italic;
-}
-
-blockquote > ul > li,
-blockquote > ul > li > p {
-	quotes: none;
-	@apply m-0 list-none;
+  quotes: none;
+  @apply m-0 bg-slate-800 pl-2 not-italic;
 }
 
 blockquote ul,
 li {
-	@apply p-0.5 text-[#000000];
+  @apply p-0.5 text-[#000000];
 }
 
-/* Link styles */
-a {
-	@apply transition-colors duration-200 ease-in-out;
+blockquote > ul > li,
+blockquote > ul > li > p {
+  quotes: none;
+  @apply m-0 list-none;
 }
 
 /* Miscellaneous */
 p:last-child {
-	@apply mb-0;
+  @apply mb-0;
 }
 
 p > code,
 li > code {
-	@apply text-[#000000];
+  @apply text-[#000000];
 }
 
 li::marker {
-	@apply text-[#000000];
+  @apply text-[#000000];
 }
 
 html #back-to-top {
-	@apply pointer-events-none opacity-0;
+  @apply pointer-events-none opacity-0;
 }
 
 html.scrolled #back-to-top {
-	@apply pointer-events-auto opacity-100;
+  @apply pointer-events-auto opacity-100;
 }

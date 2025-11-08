@@ -2,27 +2,27 @@
 import type { CollectionEntry } from "astro:content";
 
 type Props = {
-	entry: CollectionEntry<"blog"> | CollectionEntry<"projects">;
+  entry: CollectionEntry<"blog"> | CollectionEntry<"projects">;
 };
 
 const { entry } = Astro.props;
 ---
 
 <a
-	href={`/${entry.collection}/${entry.id}`}
-	class="group relative flex flex-nowrap rounded border border-[#000000] px-4 py-3 pr-10 hover:bg-[#46433b] hover:text-[#faf9f6]"
+  href={`/${entry.collection}/${entry.id}`}
+  class="group relative flex flex-nowrap rounded border border-[#000000] px-4 py-3 pr-10 hover:bg-[#46433b] hover:text-[#faf9f6]"
 >
-	<div class="flex flex-1 flex-col truncate">
-		<div class="font-semibold">
-			{entry.data.title}
-		</div>
-	</div>
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		viewBox="0 0 24 24"
-		class="absolute top-1/2 right-2 size-5 -translate-y-1/2 fill-none stroke-current stroke-2"
-	>
-		<line x1="5" y1="12" x2="19" y2="12"></line>
-		<polyline points="12 5 19 12 12 19"></polyline>
-	</svg>
+  <div class="flex flex-1 flex-col truncate">
+    <div class="font-semibold">
+      {entry.data.title}
+    </div>
+  </div>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    class="absolute top-1/2 right-2 size-5 -translate-y-1/2 fill-none stroke-current stroke-2"
+  >
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+    <polyline points="12 5 19 12 12 19"></polyline>
+  </svg>
 </a>

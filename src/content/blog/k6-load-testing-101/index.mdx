@@ -6,11 +6,9 @@ draft: false
 ---
 
 import CodeBlockFrame from "@components/CodeBlockFrame.astro";
-import TLDR from "@components/TLDR.astro"
-
+import TLDR from "@components/TLDR.astro";
 
 In our digital landscape, seamless user experiences reign supreme. A sluggish or unresponsive app erodes customer satisfaction swiftly. Integrating k6 load testing into your development cycle helps proactively identify and rectify performance bottlenecks, ensuring your system handles real-world demands without compromising functionality or usability.
-
 
 ### Step 1: Understanding Load Testing and k6
 Load testing simulates multiple concurrent users accessing your system to gauge its performance under real-world conditions. It focuses on verifying and validating an application's performance when it has a significant volume of tasks to process. A straightforward comparison can help grasp load testing - picture throwing a party at your place to evaluate if it can handle a large crowd comfortably, without running short on food, beverages or restroom access.
@@ -24,9 +22,7 @@ Enter k6 - an open-source load testing tool gaining traction among developers. I
 k6 offers a diverse range of load testing methodologies to cater to various scenarios. These methodologies include but not limited to:
 - Stress Testing: These simulations push the application to its limits by replicating the highest anticipated traffic volumes during peak periods, such as the busiest times of the day or seasonal surges. In contrast to average load tests that simulate typical traffic patterns averaged over a week, a month, or longer, stress tests focus on the maximum load the application may encounter.
 - Spike Testing: These tests recreate situations where the application experiences a sudden, massive surge in traffic, allowing you to evaluate how the application responds to such bursts.
-- Endurance Testing (Soak Testing): With longer durations than average or peak tests, endurance testing evaluates the application's performance under sustained loads over extended periods. This approach helps identify potential bottlenecks, such as resource management issues, that may only manifest after prolonged usage.
-By leveraging k6's versatile load testing capabilities, you can comprehensively analyze your application's performance tailored to your specific needs, ensuring seamless user experiences even under demanding conditions.
-
+- Endurance Testing (Soak Testing): With longer durations than average or peak tests, endurance testing evaluates the application's performance under sustained loads over extended periods. This approach helps identify potential bottlenecks, such as resource management issues, that may only manifest after prolonged usage. By leveraging k6's versatile load testing capabilities, you can comprehensively analyze your application's performance tailored to your specific needs, ensuring seamless user experiences even under demanding conditions.
 
 ### Step 2: Setting Up the k6 Environment
 Configuring k6 is seriously easy-peasy. Just follow some basic steps, kind of like making a sandwich, and you'll be cruising and ready to smash through any load testing hurdles.
@@ -51,14 +47,13 @@ node --version
 ```
 </CodeBlockFrame>
 
-
 ### Step 3: Writing Your First k6 Test Script
 Creating a solid plan is vital before diving into your first k6 load testing script. Proper planning makes the tests productive, streamlined, and aligned with your app's performance targets. Consider these key points:
 
 1. Clarify Testing Goals and Critical Scenarios:
-    - Explicitly state the aims of your load testing - are you checking max capacity, locating bottlenecks, or validating performance in specific situations? Determine the essential user journeys and scenarios requiring examination, like browsing catalogs, making purchases, or administrative workflows.
+   - Explicitly state the aims of your load testing - are you checking max capacity, locating bottlenecks, or validating performance in specific situations? Determine the essential user journeys and scenarios requiring examination, like browsing catalogs, making purchases, or administrative workflows.
 2. Define Performance Metrics and Pass/Fail Criteria:
-    - Establish the critical performance benchmarks that need to be tracked, encompassing aspects like response durations, system throughput capacity, frequency of errors or failures, and resource utilization levels. Delineate explicit boundaries for each of these metrics, distinguishing between satisfactory and unsatisfactory performance thresholds. These predefined criteria will serve as the guiding principles for evaluating the acceptability of your application's behavior under simulated load conditions.
+   - Establish the critical performance benchmarks that need to be tracked, encompassing aspects like response durations, system throughput capacity, frequency of errors or failures, and resource utilization levels. Delineate explicit boundaries for each of these metrics, distinguishing between satisfactory and unsatisfactory performance thresholds. These predefined criteria will serve as the guiding principles for evaluating the acceptability of your application's behavior under simulated load conditions.
 
 Before you start scripting, let's set up a dedicated project folder and initialize a new Node.js project. Open your terminal and navigate to the desired location, then follow these steps:
 
@@ -108,7 +103,7 @@ import { sleep } from 'k6';
 
 export const options = {
   vus: 10, // 10 virtual users
-  duration: '30s',
+  duration: "30s",
 };
 
 export default function () {
@@ -125,11 +120,11 @@ import { sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '2m', target: 100 }, // Ramp-up to 100 virtual users over 2 minutes
-    { duration: '5m', target: 100 }, // Stay at 100 virtual users for 5 minutes
-    { duration: '2m', target: 200 }, // Ramp-up to 200 virtual users over 2 minutes
-    { duration: '5m', target: 200 }, // Stay at 200 virtual users for 5 minutes
-    { duration: '2m', target: 0 }, // Ramp-down to 0 virtual users over 2 minutes
+    { duration: "2m", target: 100 }, // Ramp-up to 100 virtual users over 2 minutes
+    { duration: "5m", target: 100 }, // Stay at 100 virtual users for 5 minutes
+    { duration: "2m", target: 200 }, // Ramp-up to 200 virtual users over 2 minutes
+    { duration: "5m", target: 200 }, // Stay at 200 virtual users for 5 minutes
+    { duration: "2m", target: 0 }, // Ramp-down to 0 virtual users over 2 minutes
   ],
 };
 
@@ -147,9 +142,9 @@ import { sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '1m', target: 50 }, // Ramp-up to 50 virtual users over 1 minute
-    { duration: '30s', target: 500 }, // Spike to 500 virtual users for 30 seconds
-    { duration: '1m', target: 50 }, // Ramp-down to 50 virtual users over 1 minute
+    { duration: "1m", target: 50 }, // Ramp-up to 50 virtual users over 1 minute
+    { duration: "30s", target: 500 }, // Spike to 500 virtual users for 30 seconds
+    { duration: "1m", target: 50 }, // Ramp-down to 50 virtual users over 1 minute
   ],
 };
 
@@ -167,9 +162,9 @@ import { sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '5m', target: 100 }, // Ramp-up to 100 virtual users over 5 minutes
-    { duration: '2h', target: 100 }, // Stay at 100 virtual users for 2 hours
-    { duration: '5m', target: 0 }, // Ramp-down to 0 virtual users over 5 minutes
+    { duration: "5m", target: 100 }, // Ramp-up to 100 virtual users over 5 minutes
+    { duration: "2h", target: 100 }, // Stay at 100 virtual users for 2 hours
+    { duration: "5m", target: 0 }, // Ramp-down to 0 virtual users over 5 minutes
   ],
 };
 
@@ -181,14 +176,18 @@ export default function () {
 </CodeBlockFrame>
 
 <br />
-Alright, we have successfully created the required scripts. Now, let's break down each part of these scripts for better comprehension.
+
+Alright, we have successfully created the required scripts. Now, let's break down each part of these scripts for better
+comprehension.
+
 <br />
 
 ```js
-import http from 'k6/http';
-import { sleep } from 'k6';
+import http from "k6/http";
+import { sleep } from "k6";
 ```
 To begin, we take the `http` component from `k6/http` and the `sleep` function from `k6`. Meanwhile, the `sleep` function replicates the pause a user takes when not actively making requests, such as when reading page material or moving between different pages.
+
 <br />
 
 ```js
@@ -197,23 +196,24 @@ export const options = {...};
 Next up, we define the parameters for the load testing scenario within the `options` object. The `vus` (short for virtual users) setting dictates how many simulated users will be involved, whereas the `duration` setting controls how long the test will run. We use the stages setting to control the number of simulated users that increase and decrease during the test execution for the stress-test.js, spike-test.js, and soak-test.js scenarios.
 
 Options reference: [https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/)
+
 <br />
 
 ```js
 export default function () {
-  http.get('https://rokimiftah.id');
+  http.get("https://rokimiftah.id");
   sleep(1);
 }
 ```
 The `export default function () { ... }` function serves as the entry point for the test scenario. This function will be executed once for each virtual user. Inside this function, we call `http.get()` to make an HTTP GET request to the specified URL. In our example, we access the `https://rokimiftah.id` URL.
 
 After the HTTP request, we invoke `sleep(1)` to simulate a 1-second think time. This represents the period when an actual user might be reading the page content or performing other actions before proceeding to the next step in the user flow.
+
 <br />
 
 By understanding each part of these scripts, we can observe how k6 assists us in simulating user load and measuring our application's performance across various load testing scenarios. The `minimal-test.js` scenario runs 10 virtual users for 30 seconds, which is suitable for basic testing. `stress-test.js` gradually increases the load up to 200 virtual users, allowing us to evaluate the application's performance under high load conditions. `spike-test.js` simulates a traffic spike with 500 virtual users for 30 seconds, helping identify performance issues during sudden spikes in demand. And `soak-test.js` runs 100 virtual users for 2 hours, which is useful for detecting resource leaks or other performance issues that may arise after prolonged usage periods.
 
 These scripts are just basic examples, and we can further expand them by adding additional HTTP requests, authentication, form submissions, and other relevant user actions specific to our application.
-
 
 ### Step 4: Executing and Analyzing k6 Test Results
 Once you have crafted your k6 test scripts, the next crucial phase involves executing them and meticulously analyzing the test results. Here are the essential aspects to consider when running and interpreting your k6 load tests:
@@ -243,30 +243,25 @@ k6 run minimal-test.js --out json=minimal-test.json
 </CodeBlockFrame>
 
 5. Result Analysis
-    - Stability and Reliability: The application successfully handled a consistent load of 10 concurrent virtual users (VUs) over a 30-second period without any failures. This is evidenced by the 0% failure rate (http_req_failed: 0.00%) and the stable VU count throughout the test.
+   - Stability and Reliability: The application successfully handled a consistent load of 10 concurrent virtual users (VUs) over a 30-second period without any failures. This is evidenced by the 0% failure rate (http_req_failed: 0.00%) and the stable VU count throughout the test.
 
-    - Throughput: The system processed an average of 8.39 requests per second, totaling 260 requests over the test duration. This throughput remained consistent, indicating stable performance under the given load.
+   - Throughput: The system processed an average of 8.39 requests per second, totaling 260 requests over the test duration. This throughput remained consistent, indicating stable performance under the given load.
 
-    - Response Times:
+   - Response Times:
+     -- The average response time (http_req_duration) was 151.8ms, with a median of 130.78ms.
+     -- 90% of requests were completed within 220.49ms, and 95% within 275.19ms.
+     -- The maximum response time recorded was 564.72ms. These figures suggest reasonably good performance, with most requests being processed quickly.
 
-        -- The average response time (http_req_duration) was 151.8ms, with a median of 130.78ms.
+   - Network Behavior:
+     -- The average time spent waiting for a server response (http_req_waiting) was 136.43ms, constituting the majority of the total request duration.
+     -- Initial connection times (http_req_connecting) were minimal, averaging just 318.26µs, indicating efficient connection reuse.
 
-        -- 90% of requests were completed within 220.49ms, and 95% within 275.19ms.
+   - Data Transfer: The application transferred data at a rate of 16 kB/s received and 556 B/s sent, which appears appropriate for the nature of the requests.
 
-        -- The maximum response time recorded was 564.72ms. These figures suggest reasonably good performance, with most requests being processed quickly.
-
-    - Network Behavior:
-
-        -- The average time spent waiting for a server response (http_req_waiting) was 136.43ms, constituting the majority of the total request duration.
-
-        -- Initial connection times (http_req_connecting) were minimal, averaging just 318.26µs, indicating efficient connection reuse.
-
-    - Data Transfer: The application transferred data at a rate of 16 kB/s received and 556 B/s sent, which appears appropriate for the nature of the requests.
-
-    - Iteration Performance: Each iteration, likely representing a full user interaction cycle, took an average of 1.18 seconds, with 90% completing within 1.25 seconds.
+   - Iteration Performance: Each iteration, likely representing a full user interaction cycle, took an average of 1.18 seconds, with 90% completing within 1.25 seconds.
 
 Overall, the application shows good performance characteristics for the tested load of 10 concurrent users, with no failures and generally quick response times.
 
-
 ### Conclusion
+
 In the pursuit of delivering seamless digital experiences, load testing with k6 emerges as a game-changer. This powerful open-source tool equips developers with the ability to proactively identify and address performance bottlenecks, ensuring applications withstand real-world demands. By mastering the four-step roadmap outlined in this article, you gain invaluable insights into crafting targeted test scenarios, executing them with precision, and analyzing the results to make data-driven optimizations. Embrace k6, and unlock the full potential of your digital offerings, captivating users with unparalleled responsiveness and reliability.

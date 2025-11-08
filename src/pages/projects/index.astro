@@ -9,38 +9,32 @@ import { getCollection, type CollectionEntry } from "astro:content";
 type Projects = CollectionEntry<"projects">;
 
 const projects = ((await getCollection("projects")) as Projects[])
-	.filter((project) => !project.data.draft)
-	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+  .filter((project) => !project.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<PageLayout
-	title={PROJECTS.TITLE}
-	description={PROJECTS.DESCRIPTION}
-	url={Astro.url}
->
-	<Container>
-		<div class="space-y-5">
-			<div>
-				<BackToPrev href="/"> Home </BackToPrev>
-			</div>
-			<div class="space-y-4">
-				<section class="space-y-4">
-					<div class="text-end font-semibold text-black">
-						Projects
-					</div>
-					<div>
-						<ul class="flex flex-col gap-4">
-							{
-								projects.map((project) => (
-									<li>
-										<ArrowCard entry={project} />
-									</li>
-								))
-							}
-						</ul>
-					</div>
-				</section>
-			</div>
-		</div>
-	</Container>
+<PageLayout title={PROJECTS.TITLE} description={PROJECTS.DESCRIPTION} url={Astro.url}>
+  <Container>
+    <div class="space-y-5">
+      <div>
+        <BackToPrev href="/"> Home </BackToPrev>
+      </div>
+      <div class="space-y-4">
+        <section class="space-y-4">
+          <div class="text-end font-semibold text-black">Projects</div>
+          <div>
+            <ul class="flex flex-col gap-4">
+              {
+                projects.map((project) => (
+                  <li>
+                    <ArrowCard entry={project} />
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
+  </Container>
 </PageLayout>
