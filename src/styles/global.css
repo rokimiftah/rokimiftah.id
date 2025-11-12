@@ -169,3 +169,13 @@ html #back-to-top {
 html.scrolled #back-to-top {
   @apply pointer-events-auto opacity-100;
 }
+
+/* Table of Contents scrollbar */
+nav .overflow-y-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+nav .overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}

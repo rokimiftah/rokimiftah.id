@@ -14,33 +14,59 @@ const titleSlug = title
   .replace(/^-*|-*$/g, "");
 ---
 
-<nav class="fixed top-28 left-4 hidden w-96 pr-4 2xl:block">
-  <h2 class="mb-2 text-base font-bold">
-    <a href={`#${titleSlug}`}>Table of Contents</a>
-  </h2>
-  <ul class="space-y-1 text-sm">
-    {
-      headings.map((heading) => (
-        <li>
-          <a
-            href={`#${heading.slug}`}
-            class="toc-link block break-words text-gray-500 hover:text-gray-950"
-            data-slug={heading.slug}
-            style={{
-              marginLeft: `${(heading.depth - 2) * 16}px`,
-            }}
-          >
-            {heading.text}
-          </a>
-        </li>
-      ))
-    }
-  </ul>
+<nav class="fixed top-[49%] left-4 hidden w-80 -translate-y-1/2 2xl:block">
+  <div class="rounded-xl border border-gray-300/70 bg-linear-to-br from-gray-50 to-white p-5 backdrop-blur-sm">
+    <h2 class="mb-4 text-sm font-bold tracking-wider text-gray-700 uppercase">
+      <a href={`#${titleSlug}`} class="flex items-center gap-2 transition-colors duration-200 hover:text-gray-950">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        Table of Contents
+      </a>
+    </h2>
+    <div class="max-h-[calc(80vh-8rem)] overflow-y-auto pr-2">
+      <ul class="space-y-1 text-sm">
+        {
+          headings.map((heading) => (
+            <li class="relative">
+              <a
+                href={`#${heading.slug}`}
+                class="toc-link group relative block rounded-lg px-3 py-1.5 wrap-break-word text-gray-600 transition-all duration-300 hover:bg-gray-950/5 hover:text-gray-950"
+                data-slug={heading.slug}
+                style={{
+                  marginLeft: `${(heading.depth - 2) * 12}px`,
+                }}
+              >
+                <span class="toc-indicator absolute top-1/2 left-0 h-0 w-0.5 -translate-y-1/2 rounded-full bg-gray-950 transition-all duration-300" />
+                <span class="relative transition-transform duration-300 group-hover:translate-x-1">{heading.text}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
 </nav>
 
 <script is:inline>
   document.addEventListener("astro:page-load", () => {
     const tocLinks = document.querySelectorAll(".toc-link");
+    const tocContainer = document.querySelector("nav .overflow-y-auto");
     const headings = Array.from(tocLinks)
       .map((link) => {
         const slug = link.getAttribute("data-slug");
@@ -58,12 +84,33 @@ const titleSlug = title
 
       tocLinks.forEach((link) => {
         const linkSlug = link.getAttribute("data-slug");
+        const indicator = link.querySelector(".toc-indicator");
+
         if (slug && linkSlug === slug) {
-          link.classList.add("text-gray-950");
-          link.classList.remove("text-gray-500");
+          link.classList.add("!text-gray-950", "!font-semibold", "!bg-white");
+          link.classList.remove("text-gray-600");
+
+          if (indicator) {
+            indicator.style.height = "1.5rem";
+            indicator.style.width = "3px";
+          }
+
+          if (tocContainer) {
+            const linkRect = link.getBoundingClientRect();
+            const containerRect = tocContainer.getBoundingClientRect();
+
+            if (linkRect.top < containerRect.top || linkRect.bottom > containerRect.bottom) {
+              link.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }
         } else {
-          link.classList.remove("text-gray-950");
-          link.classList.add("text-gray-500");
+          link.classList.remove("!text-gray-950", "!font-semibold", "!bg-white");
+          link.classList.add("text-gray-600");
+
+          if (indicator) {
+            indicator.style.height = "0";
+            indicator.style.width = "0.5px";
+          }
         }
       });
 
