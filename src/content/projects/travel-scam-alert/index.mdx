@@ -1,0 +1,922 @@
+---
+title: "Travel Scam Alert: AI-Powered Global Scam Visualization Platform"
+description: "Interactive 3D globe visualizing travel scams worldwide with AI analysis, voice assistant, and real-time Reddit data scraping to keep travelers safe everywhere."
+date: "October 01 2025"
+draft: false
+demoURL: "https://scam.web.id"
+repoURL: "https://github.com/rokimiftah/scam.web.id"
+---
+
+import CodeBlockFrame from "@components/CodeBlockFrame.astro";
+
+![Travel Scam Alert Globe Visualization](https://cdn.rokimiftah.id/projects/travel-scam-alert/1.avif)
+
+**Travel Scam Alert** is an AI-powered public service platform that visualizes travel scams worldwide through an interactive 3D globe. It combines real-time Reddit data scraping, LLM-powered analysis, voice assistance, and geocoding to help travelers stay safe anywhere.
+
+### Why it matters
+- **Real-time awareness**: Automated Reddit scraping from 5 travel subreddits (r/scams, r/travelscams, r/digitalnomad, r/solotravel, r/travel) keeps data fresh
+- **AI-powered insights**: OpenAI analyzes each story for scam type, warning signals, and prevention tips
+- **Visual intelligence**: 3D globe with risk-based color coding (green/amber/red) shows hotspots at a glance
+- **Voice queries**: VAPI voice assistant lets you ask "What scams are reported in Singapore?" hands-free
+- **Location accuracy**: Geocoding with Mapbox resolves ambiguous locations to precise coordinates
+- **Community-driven**: Aggregates 1000+ verified scam reports from Reddit communities
+
+### How it works (brief)
+1. **Data collection**: Firecrawl scrapes Reddit posts from travel subreddits using keywords (scam, fraud, warning, etc.)
+2. **AI analysis**: OpenAI processes each story to extract scam type, location, methods, warning signals, and prevention tips
+3. **Geocoding**: Mapbox converts location strings ("Taj Mahal, India") to coordinates
+4. **Aggregation**: Statistics calculated by country (total scams, top types, average loss)
+5. **Visualization**: react-globe.gl renders interactive 3D globe with clickable countries
+6. **Voice interface**: VAPI answers natural language queries about any country's scam data
+
+### Stack
+- **Frontend**: React 19 + TypeScript
+- **3D Visualization**: react-globe.gl + Three.js
+- **Backend**: Convex (serverless, real-time DB)
+- **Auth**: Convex Auth (Google + GitHub OAuth)
+- **Voice AI**: VAPI.ai
+- **LLM**: OpenAI (GPT-4o-mini for scam analysis)
+- **Web Scraping**: Firecrawl API
+- **Geocoding**: Mapbox Geocoding API
+- **Email**: Resend
+- **Build**: Rsbuild (Rspack)
+
+---
+
+## The Problem: Travel Scams Are Invisible Until Too Late
+
+Travelers face a critical information gap:
+- **Scams are location-specific**: What works in Paris won't work in Bangkok
+- **Data is scattered**: Reports buried in Reddit threads, travel forums, blogs
+- **Patterns are hidden**: Same scam tactics used across countries, hard to spot
+- **No visual context**: Can't see global hotspots or risk levels at a glance
+- **Access barriers**: Reading 1000+ forum posts before every trip is impractical
+
+Existing solutions:
+- **Travel advisories**: Government warnings too broad, not scam-specific
+- **Review sites**: Focus on hotels/restaurants, not scam prevention
+- **Forums**: Information overload, no aggregation or analysis
+- **Social media**: Anecdotal, no verification or categorization
+
+**Result**: Travelers discover scams AFTER becoming victims.
+
+---
+
+## The Solution: AI-Powered Scam Intelligence
+
+Travel Scam Alert aggregates, analyzes, and visualizes scam data at scale:
+
+### 1. Automated Reddit Scraping (Firecrawl)
+
+**Target subreddits**:
+- `r/scams` - General scam reports (500k+ members)
+- `r/travelscams` - Travel-specific scams (50k+ members)
+- `r/digitalnomad` - Remote work scams (1M+ members)
+- `r/solotravel` - Solo traveler experiences (3M+ members)
+- `r/travel` - General travel discussions (27M+ members)
+
+**Keywords** (filtered):
+<CodeBlockFrame title="">
+```typescript
+const REDDIT_KEYWORDS = [
+  "travel scam", "scammed", "rip off", "timeshare",
+  "taxi", "tour", "fraud", "fake", "warning", "avoid",
+  "pickpocket", "atm", "booking", "visa", "airport",
+  "police", "ticket"
+];
+```
+</CodeBlockFrame>
+
+**Scraping flow**:
+1. Firecrawl API calls Reddit's JSON API (no auth needed for public posts)
+2. Fetches up to 100 posts per subreddit/keyword combo
+3. Stores raw post data in `scamStories` table with `isProcessed: false`
+4. Handles rate limits with exponential backoff
+5. Fetches top comments for additional context
+6. Analyzes comments for additional scam stories
+
+**Implementation**:
+<CodeBlockFrame title="convex/reddit.ts">
+```typescript
+export const fetchRedditPosts = internalAction({
+  args: { subreddit: v.string(), keyword: v.string(), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const searchUrl = `https://www.reddit.com/r/${args.subreddit}/search.json?q=${encodeURIComponent(args.keyword)}&restrict_sr=on&sort=new&limit=${args.limit || 100}`;
+
+    const response = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "TravelScamTracker/1.0",
+        Accept: "application/json"
+      }
+    });
+
+    // Handle rate limiting (429)
+    if (response.status === 429) {
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      // Retry with smaller limit
+    }
+
+    const data = await response.json();
+    const posts = data.data?.children?.map((child: any) => child.data) || [];
+
+    // Store raw posts
+    for (const post of posts) {
+      await ctx.runMutation(internal.reddit.storeRawPost, {
+        postData: {
+          id: post.id,
+          title: post.title,
+          selftext: post.selftext,
+          author: post.author,
+          created_utc: post.created_utc,
+          ups: post.ups,
+          permalink: post.permalink,
+        }
+      });
+    }
+  }
+});
+```
+</CodeBlockFrame>
+
+**Schedule**: Run hourly via Convex cron to keep data fresh.
+
+### 2. AI-Powered Scam Analysis (OpenAI)
+
+Each raw Reddit post is analyzed by GPT-4o-mini to extract structured data:
+
+**Analysis output**:
+<CodeBlockFrame title="">
+```typescript
+interface ScamAnalysis {
+  isScamStory: boolean;            // Filter out non-scam posts
+  confidence: number;              // 0-1 (AI confidence)
+  country: string;                 // Primary location
+  city?: string;                   // City if mentioned
+  specificLocation?: string;       // Landmark (e.g., "Eiffel Tower")
+  scamType: ScamType;             // taxi, accommodation, police, etc.
+  scamMethods: string[];          // Specific tactics used
+  targetDemographics: string[];   // Who was targeted
+  moneyLost?: number;             // Amount lost (if mentioned)
+  currency?: string;              // USD, EUR, etc.
+  warningSignals: string[];       // Red flags to watch for
+  preventionTips: string[];       // How to avoid this scam
+  resolution?: string;            // Outcome of the story
+  summary: string;                // AI-generated summary
+}
+```
+</CodeBlockFrame>
+
+**Prompt engineering** (simplified):
+<CodeBlockFrame title="">
+```typescript
+const prompt = `
+Analyze this Reddit post about a travel experience. Extract:
+
+1. Is this a genuine scam story? (yes/no + confidence 0-1)
+2. Location: Country, city, specific landmark
+3. Scam type: taxi, accommodation, tour, police, ATM, restaurant, shopping, visa, airport, pickpocket, romance, timeshare, fake_ticket, currency_exchange, other
+4. Scam methods: List specific tactics used
+5. Target demographics: tourist types (solo, family, backpacker, business)
+6. Financial loss: Amount and currency
+7. Warning signals: Red flags that indicated the scam
+8. Prevention tips: How to avoid this scam
+9. Resolution: How it ended
+10. Summary: 2-3 sentence summary
+
+Post:
+Title: ${story.title}
+Author: ${story.authorUsername}
+Upvotes: ${story.upvotes}
+Story: ${story.fullStory}
+Comments: ${commentsText}
+
+Return JSON only.
+`;
+```
+</CodeBlockFrame>
+
+**Implementation**:
+<CodeBlockFrame title="convex/aiAnalyzer.ts">
+```typescript
+export const analyzeScamStory = internalAction({
+  args: { storyId: v.id("scamStories") },
+  handler: async (ctx, args) => {
+    const story = await ctx.runQuery(internal.aiAnalyzer.getStoryById, { storyId: args.storyId });
+
+    if (story.isProcessed) return { success: false };
+
+    // Get comments for context
+    const comments = await ctx.runQuery(internal.aiAnalyzer.getStoryComments, { storyId: args.storyId });
+
+    // Call OpenAI
+    const analysis = await analyzeWithOpenAI(contentToAnalyze);
+
+    if (analysis.isScamStory) {
+      // Geocode location
+      const coordinates = await ctx.runAction(internal.geocoding.geocodeAndNormalize, {
+        location: `${analysis.city}, ${analysis.country}`,
+        country: analysis.country
+      });
+
+      // Update story with analysis
+      await ctx.runMutation(internal.aiAnalyzer.updateStoryWithAnalysis, {
+        storyId: args.storyId,
+        analysis,
+        coordinates: coordinates.coordinates
+      });
+
+      // Update location stats
+      await ctx.runMutation(internal.aiAnalyzer.updateLocationStats, {
+        country: analysis.country,
+        city: analysis.city,
+        scamType: analysis.scamType
+      });
+    }
+  }
+});
+```
+</CodeBlockFrame>
+
+**AI confidence filtering**: Only stories with confidence > 0.7 are displayed.
+
+### 3. Geocoding & Location Normalization (Mapbox)
+
+Converting "Taj Mahal, India" to `{ lat: 27.1751, lng: 78.0421 }`:
+
+**Challenges**:
+- Ambiguous names: "Paris" (France vs. Texas vs. Ontario)
+- Spelling variations: "Turkey" vs. "Türkiye", "Czech Republic" vs. "Czechia"
+- Landmarks: "Eiffel Tower" should map to Paris, France
+- Colloquial names: "UK" → "United Kingdom", "USA" → "United States"
+
+**Solution**: Mapbox Forward Geocoding API + country biasing
+<CodeBlockFrame title="convex/geocoding.ts">
+```typescript
+export const geocodeAndNormalize = action({
+  args: { location: v.string(), country: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
+
+    // Build query: prioritize country context
+    const query = args.country
+      ? `${args.location}, ${args.country}`
+      : args.location;
+
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&types=country,place&limit=1`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.features?.length > 0) {
+      const feature = data.features[0];
+      const [lng, lat] = feature.center;
+
+      // Extract canonical country/city names from Mapbox
+      const country = feature.context?.find((c: any) => c.id.startsWith('country'))?.text;
+      const city = feature.context?.find((c: any) => c.id.startsWith('place'))?.text || feature.text;
+
+      return {
+        success: true,
+        coordinates: { lat, lng },
+        country,
+        city
+      };
+    }
+
+    return { success: false };
+  }
+});
+```
+</CodeBlockFrame>
+
+**Country alias mapping** (for voice assistant):
+<CodeBlockFrame title="">
+```typescript
+const countryAliasMap: Record<string, string> = {
+  "Turkey": "Türkiye",
+  "Turkiye": "Türkiye",
+  "China": "People's Republic of China",
+  "Korea": "South Korea",
+  "USA": "United States",
+  "US": "United States",
+  "UK": "United Kingdom",
+  "Britain": "United Kingdom",
+  "UAE": "United Arab Emirates",
+  "Holland": "Netherlands",
+  // ... 20+ more aliases
+};
+```
+</CodeBlockFrame>
+
+### 4. Statistics Aggregation
+
+**Per-country stats** stored in `locationStats` table:
+<CodeBlockFrame title="">
+```typescript
+locationStats: defineTable({
+  country: v.string(),
+  city: v.optional(v.string()),
+  totalScams: v.number(),
+  topScamTypes: v.array(v.object({
+    type: scamTypes,
+    count: v.number()
+  })),
+  averageLoss: v.optional(v.number()),
+  lastUpdated: v.number(),
+  coordinates: v.optional(v.object({
+    lat: v.number(),
+    lng: v.number()
+  }))
+})
+.index("by_country", ["country"])
+```
+</CodeBlockFrame>
+
+**Calculation logic**:
+1. Count total stories per country
+2. Group by scam type, sort by frequency
+3. Calculate average financial loss (if reported)
+4. Store aggregated coordinates (country centroid)
+5. Update timestamp
+
+**Risk level formula**:
+<CodeBlockFrame title="">
+```typescript
+function calculateRiskLevel(totalScams: number): string {
+  if (totalScams >= 10) return "HIGH RISK";
+  if (totalScams >= 5) return "MEDIUM RISK";
+  return "LOW RISK";
+}
+```
+</CodeBlockFrame>
+
+### 5. 3D Globe Visualization (react-globe.gl)
+
+**Technology**: react-globe.gl (Three.js wrapper) + custom materials
+
+**Rendering pipeline**:
+1. Load natural Earth GeoJSON (countries polygons)
+2. Query scam data from Convex
+3. Map database country names to GeoJSON names
+4. Color countries by risk level:
+   - **Green** (0-4 scams): Low risk
+   - **Amber** (5-9 scams): Medium risk
+   - **Red** (10+ scams): High risk
+5. Add point markers for specific cities with multiple reports
+6. Handle country clicks → Zoom + show details panel
+
+**Implementation** (simplified):
+<CodeBlockFrame title="src/pages/App/index.tsx">
+```tsx
+import Globe from "react-globe.gl";
+
+function App() {
+  const scamStories = useQuery(api.scams.getScamStories);
+  const locationStats = useQuery(api.scams.getLocationStats);
+
+  // Aggregate points by country
+  const countryData = useMemo(() => {
+    const map = new Map<string, ScamPoint>();
+
+    scamStories.forEach(story => {
+      const existing = map.get(story.country);
+      if (existing) {
+        existing.reports++;
+        existing.storyIds.push(story._id);
+      } else {
+        map.set(story.country, {
+          country: story.country,
+          lat: story.coordinates.lat,
+          lng: story.coordinates.lng,
+          reports: 1,
+          risk: calculateRisk(1),
+          storyIds: [story._id]
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [scamStories]);
+
+  // Color countries by risk
+  const polygonsData = useMemo(() => {
+    return countriesGeoJson.features.map(feature => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        scamCount: getScamCount(feature.properties.NAME)
+      }
+    }));
+  }, [countriesGeoJson, countryData]);
+
+  return (
+    <Globe
+      globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+      polygonsData={polygonsData}
+      polygonAltitude={0.01}
+      polygonCapColor={d => getRiskColor(d.properties.scamCount)}
+      polygonSideColor={() => 'rgba(0, 100, 200, 0.15)'}
+      polygonStrokeColor={() => '#111'}
+      onPolygonClick={handleCountryClick}
+      pointsData={countryData}
+      pointAltitude={0.02}
+      pointColor={d => getRiskColor(d.reports)}
+      pointRadius={d => Math.min(d.reports * 0.05, 0.5)}
+    />
+  );
+}
+```
+</CodeBlockFrame>
+
+**Performance optimizations**:
+- Lazy load globe component (React.lazy)
+- Memoize country data calculations
+- Throttle click handlers
+- Mobile blocker (3D globe too heavy for phones)
+
+### 6. Voice Assistant Integration (VAPI)
+
+**Natural language queries** about any country:
+- "What scams are reported in Thailand?"
+- "Tell me about Singapore travel scams"
+- "Is it safe to visit Turkey?"
+
+**Architecture**:
+```
+User speaks → VAPI captures audio → Transcribes to text →
+Calls tool "queryScamsByLocation" → Convex webhook →
+Database query → Format response → VAPI speaks answer
+```
+
+**Tool definition**:
+<CodeBlockFrame title="convex/vapiTools.ts">
+```typescript
+const tools = [{
+  type: "function",
+  function: {
+    name: "queryScamsByLocation",
+    description: "Get scam data for a specific country",
+    parameters: {
+      type: "object",
+      properties: {
+        country: {
+          type: "string",
+          description: "Country name (e.g., 'Singapore', 'Thailand')"
+        }
+      },
+      required: ["country"]
+    }
+  }
+}];
+```
+</CodeBlockFrame>
+
+**Webhook handler**:
+<CodeBlockFrame title="convex/vapiTools.ts">
+```typescript
+export const handleToolCall = httpAction(async (ctx, request) => {
+  const body = await request.json();
+  const toolCall = body.message?.toolCalls?.[0];
+
+  if (toolCall.function.name === "queryScamsByLocation") {
+    const args = JSON.parse(toolCall.function.arguments);
+    let country = args.country;
+
+    // Map aliases
+    const mappedCountry = countryAliasMap[country] || country;
+
+    // Query database
+    const scamData = await ctx.runQuery(internal.vapiTools.getScamDataForCountry, {
+      country: mappedCountry
+    });
+
+    // Return formatted response
+    return new Response(JSON.stringify({
+      results: [{
+        toolCallId: toolCall.id,
+        result: scamData.message
+      }]
+    }));
+  }
+});
+```
+</CodeBlockFrame>
+
+**Response format** (optimized for voice):
+```
+"Singapore: MEDIUM RISK, 7 scam reports.
+Types: taxi overcharge, fake tour packages, accommodation fraud.
+Warnings: Unlicensed taxis at airport, upfront payment demands.
+Tips: Use official taxi queues, book verified accommodations."
+```
+
+**Conversation history**: Displayed in UI with role labels (user/assistant).
+
+---
+
+## Database Schema
+
+### Core Tables
+
+**scamStories**: Individual scam reports
+<CodeBlockFrame title="">
+```typescript
+scamStories: defineTable({
+  // Reddit metadata
+  redditUrl: v.string(),
+  subreddit: v.string(),
+  postId: v.string(),
+  authorUsername: v.string(),
+  postDate: v.number(),
+  upvotes: v.number(),
+  num_comments: v.optional(v.number()),
+
+  // Story content
+  title: v.string(),
+  summary: v.string(),
+  fullStory: v.string(),
+
+  // Location
+  country: v.string(),
+  city: v.optional(v.string()),
+  specificLocation: v.optional(v.string()),
+  coordinates: v.optional(v.object({
+    lat: v.number(),
+    lng: v.number()
+  })),
+
+  // Scam categorization
+  scamType: scamTypes,              // 15 predefined types
+  scamMethods: v.array(v.string()),
+  targetDemographics: v.array(v.string()),
+
+  // Financial
+  moneyLost: v.optional(v.number()),
+  currency: v.optional(v.string()),
+
+  // AI analysis
+  warningSignals: v.array(v.string()),
+  preventionTips: v.array(v.string()),
+  resolution: v.optional(v.string()),
+  aiConfidenceScore: v.number(),
+
+  // Verification
+  verificationStatus: verificationStatus,
+
+  // Processing
+  isProcessed: v.boolean(),
+  processingAttempts: v.optional(v.number())
+})
+.index("by_country", ["country"])
+.index("by_type", ["scamType"])
+.index("by_processed", ["isProcessed"])
+.index("by_processed_postDate", ["isProcessed", "postDate"])
+```
+</CodeBlockFrame>
+
+**locationStats**: Aggregated statistics
+<CodeBlockFrame title="">
+```typescript
+locationStats: defineTable({
+  country: v.string(),
+  city: v.optional(v.string()),
+  totalScams: v.number(),
+  topScamTypes: v.array(v.object({
+    type: scamTypes,
+    count: v.number()
+  })),
+  averageLoss: v.optional(v.number()),
+  lastUpdated: v.number(),
+  coordinates: v.optional(v.object({
+    lat: v.number(),
+    lng: v.number()
+  }))
+})
+.index("by_country", ["country"])
+```
+</CodeBlockFrame>
+
+**scamComments**: Additional context from Reddit comments
+<CodeBlockFrame title="">
+```typescript
+scamComments: defineTable({
+  storyId: v.id("scamStories"),
+  redditCommentId: v.string(),
+  authorUsername: v.string(),
+  content: v.string(),
+  upvotes: v.number(),
+  isHelpful: v.boolean(),
+  containsAdvice: v.boolean(),
+  isAnalyzedForScam: v.optional(v.boolean())
+})
+.index("by_story", ["storyId"])
+.index("by_analyzed", ["isAnalyzedForScam"])
+```
+</CodeBlockFrame>
+
+### Indexes Strategy
+
+**Query patterns**:
+1. Get all stories by country: `by_country`
+2. Get stories by scam type: `by_type`
+3. Get unprocessed stories: `by_processed`
+4. Get recent stories: `by_processed_postDate` (composite)
+5. Full-text search: `search_stories` (search index)
+
+**Performance**: Convex automatically optimizes queries with proper indexes.
+
+---
+
+## Frontend Architecture
+
+### Pages
+
+**Main App** (`/`):
+- 3D globe with scam visualization
+- Country detail panel (on click)
+- Voice assistant interface
+- User menu (auth)
+- Search bar (future)
+
+**Auth Pages**:
+- `/auth/signin` - Google + GitHub OAuth
+- `/auth/magic-link` - Magic link verification
+
+**Legal**:
+- `/privacy` - Privacy policy
+- `/terms` - Terms of service
+
+### Components
+
+**VoiceAssistantIntegrated**:
+<CodeBlockFrame title="src/features/voice/VoiceAssistantIntegrated.tsx">
+```tsx
+import { useVapi } from "@vapi-ai/web";
+
+function VoiceAssistantIntegrated() {
+  const { start, stop, isSessionActive, messages } = useVapi({
+    publicKey: PUBLIC_VAPI_PUBLIC_KEY,
+    assistant: {
+      model: { provider: "openai", model: "gpt-4o" },
+      voice: { provider: "11labs", voiceId: "paula" },
+      tools: [queryScamsByLocationTool],
+      serverUrl: "https://scam.web.id/api/http/vapi/tool-call"
+    }
+  });
+
+  return (
+    <div>
+      <button onClick={isSessionActive ? stop : start}>
+        {isSessionActive ? "Stop" : "Ask about scams"}
+      </button>
+
+      <div className="transcript">
+        {messages.map(msg => (
+          <div key={msg.id} className={msg.role}>
+            {msg.content}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+</CodeBlockFrame>
+
+**Globe** (lazy loaded):
+<CodeBlockFrame title="">
+```tsx
+const Globe = lazy(() => import("react-globe.gl"));
+
+function GlobeWrapper() {
+  return (
+    <Suspense fallback={<FullscreenLoader />}>
+      <Globe {...props} />
+    </Suspense>
+  );
+}
+```
+</CodeBlockFrame>
+
+**UserMenu**:
+- Profile dropdown
+- Edit profile modal (avatar upload via Convex storage)
+- Sign out
+
+### State Management
+
+**Convex real-time queries**:
+<CodeBlockFrame title="">
+```typescript
+// Auto-updates when database changes
+const stories = useQuery(api.scams.getScamStories, { limit: 1000 });
+const stats = useQuery(api.scams.getLocationStats);
+const user = useQuery(api.users.getCurrentUser);
+```
+</CodeBlockFrame>
+
+**Local state** (React hooks):
+- Selected country
+- Globe view angle
+- Voice assistant status
+- Detail panel open/closed
+
+---
+
+## Key Design Decisions
+
+### Why Reddit as Data Source?
+
+**Pros**:
+- Large travel communities (30M+ combined members)
+- First-hand victim accounts (authentic)
+- Community verification via upvotes
+- Rich context from comments
+- Public JSON API (no auth needed)
+- Regular fresh content
+
+**Cons**:
+- Potential bias (only English-speaking Reddit users)
+- Unverified stories (some may be fake)
+- Rate limits (60 requests/minute)
+
+**Mitigation**:
+- AI confidence scoring (filter low-confidence)
+- Upvote threshold (only analyze posts with 5+ upvotes)
+- Community verification status
+- Multiple subreddit sources (cross-validation)
+
+### Why 3D Globe vs. 2D Map?
+
+**3D advantages**:
+- More engaging (gamification effect)
+- Better spatial awareness (zoom from space to street level)
+- Natural country selection (click directly on country)
+- Visualizes global scale of scam problem
+
+**Trade-offs**:
+- Higher performance cost (mobile devices struggle)
+- Longer initial load time
+- Accessibility challenges (keyboard nav harder)
+
+**Solution**:
+- Mobile blocker (redirect to 2D version on small screens)
+- Lazy loading with skeleton
+- Fallback 2D map mode (future)
+
+### Why OpenAI for Analysis?
+
+**Alternatives considered**:
+- Anthropic Claude (better reasoning, higher cost)
+- Llama 3 (open source, lower quality)
+- Regex + keyword matching (brittle, no context understanding)
+
+**OpenAI wins**:
+- Best price/performance (GPT-4o-mini: $0.15/1M tokens)
+- Structured output support (JSON mode)
+- Function calling (for tool integration)
+- Fast inference (sub-second response)
+
+### Why Convex Backend?
+
+**Alternatives**:
+- Firebase (no serverless functions)
+- Supabase (PostgreSQL not ideal for real-time)
+- Custom Express + MongoDB (more setup complexity)
+
+**Convex advantages**:
+- Real-time subscriptions out-of-the-box
+- Serverless functions (actions, queries, mutations)
+- TypeScript-first (auto-generated types)
+- Integrated auth with OAuth
+- Cron jobs (scheduled scraping)
+- HTTP routes (VAPI webhooks)
+- File storage (avatar uploads)
+
+---
+
+## Performance Optimizations
+
+### Frontend
+
+1. **Lazy loading**: Globe component loaded only when needed
+2. **Memoization**: Country data calculations cached with useMemo
+3. **Throttling**: Click handlers debounced (300ms)
+4. **Code splitting**: Route-based chunks
+5. **Image optimization**: WebP with blur placeholders
+
+### Backend
+
+1. **Indexed queries**: All filter fields have indexes
+2. **Composite indexes**: Multi-field queries optimized
+3. **Batch processing**: Analyze 10 stories at a time (avoid timeouts)
+4. **Rate limit handling**: Exponential backoff for Reddit API
+5. **Caching**: Location stats cached (updated hourly)
+
+### Data Pipeline
+
+1. **Incremental scraping**: Only fetch new posts (track lastPostId)
+2. **Deduplication**: Reddit postId as unique index
+3. **Retry logic**: Failed analysis retries max 3 times
+4. **Parallel processing**: Multiple scrapers run concurrently
+
+---
+
+## Future Enhancements
+
+### Community Features
+- **User submissions**: Report scams directly (moderation queue)
+- **Verification system**: Community upvote/downvote for accuracy
+- **Comment threads**: Discuss scam tactics
+- **Follow locations**: Get alerts for specific countries
+
+### Data Expansion
+- **More sources**: TripAdvisor, Facebook groups, X/Twitter
+- **Multi-language**: Scrape non-English Reddit/forums
+- **Historical data**: Analyze trends over years
+- **Real-time alerts**: Push notifications for new scams
+
+### Visualization
+- **Heatmaps**: Density-based clustering
+- **Timeline view**: Play scam reports over time
+- **Scam type filters**: Toggle layers (taxi, accommodation, etc.)
+- **AR mode**: View scams in augmented reality (mobile)
+
+### Analytics
+- **Trend detection**: ML to predict emerging scam patterns
+- **Risk scoring**: Personalized risk based on travel style
+- **Prevention effectiveness**: Track which tips reduce scam rate
+
+### Integrations
+- **Travel booking**: Integrate with Booking.com, Airbnb
+- **Insurance**: Partner with travel insurance providers
+- **Government**: Share data with official travel advisories
+
+---
+
+## Architecture Diagram
+<center>
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        FRONTEND (React)                     │
+│  ┌────────────┐  ┌──────────────┐  ┌──────────────────┐     │
+│  │ 3D Globe   │  │ Voice UI     │  │ Country Details  │     │
+│  │ (Three.js) │  │ (VAPI Web)   │  │ (Stats, Stories) │     │
+│  └────────────┘  └──────────────┘  └──────────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              │ Convex Real-time Queries
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    CONVEX BACKEND                           │
+│  ┌───────────────┐  ┌──────────────┐  ┌─────────────────┐   │
+│  │ Queries       │  │ Actions      │  │ HTTP Routes     │   │
+│  │ (real-time)   │  │ (AI, scrape) │  │ (VAPI webhook)  │   │
+│  └───────────────┘  └──────────────┘  └─────────────────┘   │
+│                                                             │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │                    DATABASE                            │ │
+│  │  • scamStories (1000+ docs)                            │ │
+│  │  • locationStats (200+ countries)                      │ │
+│  │  • scamComments (5000+ docs)                           │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+        │                    │                    │
+        │                    │                    │
+        ▼                    ▼                    ▼
+┌──────────────┐   ┌──────────────────┐   ┌──────────────┐
+│  Firecrawl   │   │  OpenAI GPT-4o   │   │   Mapbox     │
+│  (Reddit)    │   │  (Analysis)      │   │  (Geocoding) │
+└──────────────┘   └──────────────────┘   └──────────────┘
+        │                    │                    │
+        └────────────────────┴────────────────────┘
+                         Cron Jobs
+                    (Hourly scraping +
+                     AI processing)
+```
+</center>
+
+---
+
+## Security & Privacy
+
+### Data Collection
+- **Public sources only**: Reddit public posts (no private messages)
+- **No PII**: Names/emails/phone numbers redacted from stories
+- **Anonymization**: Reddit usernames stored but not linked to platform users
+
+### Authentication
+- **OAuth only**: Google + GitHub (no password storage)
+- **Optional login**: View globe without account, login for voice/email alerts
+
+### API Security
+- **Rate limiting**: Max 100 requests/min per IP
+- **CORS**: Restricted to scam.web.id domain
+- **Webhook verification**: VAPI signatures validated
+- **Env vars**: All secrets in Convex env (not code)
+
+### GDPR Compliance
+- **Right to access**: Users can export their data
+- **Right to deletion**: Account deletion removes all data
+- **Cookie consent**: Banner with opt-out
+- **Privacy policy**: Full disclosure of data usage
