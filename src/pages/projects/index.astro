@@ -19,22 +19,20 @@ const projects = ((await getCollection("projects")) as Projects[])
       <div>
         <BackToPrev href="/"> Home </BackToPrev>
       </div>
-      <div class="space-y-4">
-        <section class="space-y-4">
-          <div class="text-end font-semibold text-black">Projects</div>
-          <div>
-            <ul class="flex flex-col gap-4">
-              {
-                projects.map((project) => (
-                  <li>
-                    <ArrowCard entry={project} />
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-        </section>
-      </div>
+      <section class="space-y-4">
+        <div class="text-end font-semibold text-[#46433b]">Projects</div>
+        <div>
+          <ul class="flex flex-col space-y-2">
+            {
+              projects.map((project) => (
+                <li>
+                  <ArrowCard entry={project} />
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </section>
     </div>
   </Container>
 </PageLayout>

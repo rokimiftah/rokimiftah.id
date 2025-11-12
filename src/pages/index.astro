@@ -21,22 +21,22 @@ const projects = (await getCollection("projects"))
 
 <HomeLayout description={SITE.DESCRIPTION} canonical={`${Astro.site}`}>
   <Container>
-    <div class="space-y-16">
+    <div class="space-y-11">
       <section>
         <article>
-          <p class="m-0 p-0">
+          <p class="text-md m-0 p-0 leading-relaxed">
             A lifelong learner with a passion for keeping up with the latest trends and developments in the ever-evolving field of
             software engineering.
           </p>
         </article>
       </section>
 
-      <section class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-y-2">
-          <h5 class="font-semibold text-[#000000]">Blog</h5>
-          <Link href="/blog"> See all posts </Link>
+      <section class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-y-2 text-sm text-black">
+          <h5 class="font-semibold">Blog</h5>
+          <Link href="/blog">See all posts</Link>
         </div>
-        <ul class="flex flex-col gap-4">
+        <ul class="flex flex-col gap-2">
           {
             blog.map((post) => (
               <li>
@@ -47,12 +47,12 @@ const projects = (await getCollection("projects"))
         </ul>
       </section>
 
-      <section class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-y-2">
-          <h5 class="font-semibold text-black">Projects</h5>
-          <Link href="/projects"> See all projects </Link>
+      <section class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-y-2 text-sm text-black">
+          <h5 class="font-semibold">Projects</h5>
+          <Link href="/projects">See all projects</Link>
         </div>
-        <ul class="flex flex-col gap-4">
+        <ul class="flex flex-col gap-2">
           {
             projects.map((project) => (
               <li>
@@ -63,14 +63,8 @@ const projects = (await getCollection("projects"))
         </ul>
       </section>
 
-      <section class="space-y-6">
-        <h5 class="font-semibold text-[#000000]">Let's connect</h5>
-        <article>
-          <p>
-            If you want to get in touch with me about something or just to say hi, reach out on social media or send me an email.
-          </p>
-        </article>
-        <ul class="flex flex-wrap gap-2">
+      <section class="space-y-2">
+        <ul class="flex flex-wrap gap-2 text-sm text-black">
           {
             SOCIALS.map((SOCIAL) => (
               <li class="flex gap-x-2 text-nowrap">

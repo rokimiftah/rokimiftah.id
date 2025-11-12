@@ -25,7 +25,7 @@ const { Content, headings } = await render(post);
 ---
 
 <PageLayout title={post.data.title} description={post.data.description} url={Astro.url} heading={headings}>
-  <Container>
+  <Container wide>
     <div>
       <BackToPrev href="/blog"> Blog </BackToPrev>
     </div>
@@ -44,7 +44,7 @@ const { Content, headings } = await render(post);
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-*|-*$/g, "")}
-        class="font-onest scroll-mt-8 text-3xl font-bold text-[#1a1916] uppercase"
+        class="font-onest scroll-mt-8 text-3xl font-bold text-[#1a1916]"
       >
         {post.data.title}
       </div>

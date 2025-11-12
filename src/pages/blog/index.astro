@@ -38,9 +38,9 @@ const years = Object.keys(posts).sort((a, b) => Number.parseInt(b, 10) - Number.
         {
           years.map((year) => (
             <section class="space-y-4">
-              <div class="text-end font-semibold text-[#000000]">{year}</div>
+              <div class="text-end font-semibold text-[#46433b]">{year}</div>
               <div>
-                <ul class="flex flex-col gap-4">
+                <ul class="flex flex-col space-y-2">
                   {posts[year].map((post) => (
                     <li>
                       <ArrowCard entry={post} />

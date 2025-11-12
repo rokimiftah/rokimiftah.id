@@ -1,5 +1,6 @@
 ---
 import BackToPrev from "@components/BackToPrev.astro";
+import BackToTop from "@components/BackToTop.astro";
 import Container from "@components/Container.astro";
 import FormattedDate from "@components/FormattedDate.astro";
 import Link from "@components/Link.astro";
@@ -25,7 +26,7 @@ const { Content, headings } = await render(project);
 ---
 
 <PageLayout title={project.data.title} description={project.data.description} url={Astro.url} heading={headings}>
-  <Container>
+  <Container wide>
     <div>
       <BackToPrev href="/projects"> Projects </BackToPrev>
     </div>
@@ -44,13 +45,15 @@ const { Content, headings } = await render(project);
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-*|-*$/g, "")}
-        class="scroll-mt-8 text-2xl font-semibold text-black"
+        class="font-onest scroll-mt-8 text-3xl font-bold text-[#1a1916]"
       >
         {project.data.title}
       </div>
+    </div>
+    <article>
       {
         (project.data.demoURL || project.data.repoURL) && (
-          <nav class="flex gap-1">
+          <nav class="mb-12 flex justify-center gap-1 tracking-widest uppercase">
             {project.data.demoURL && (
               <Link href={project.data.demoURL} external>
                 Demo
@@ -65,9 +68,8 @@ const { Content, headings } = await render(project);
           </nav>
         )
       }
-    </div>
-    <article>
       <Content />
     </article>
   </Container>
+  <BackToTop />
 </PageLayout>
