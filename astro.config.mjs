@@ -1,12 +1,9 @@
 // @ts-check
 
-import fs from "node:fs";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
-
-const aurora = JSON.parse(fs.readFileSync("src/assets/themes/aurora.json", "utf8"));
 
 export default defineConfig({
   devToolbar: {
@@ -22,7 +19,7 @@ export default defineConfig({
 
   markdown: {
     shikiConfig: {
-      theme: aurora,
+      theme: "dark-plus",
       wrap: false,
     },
   },
