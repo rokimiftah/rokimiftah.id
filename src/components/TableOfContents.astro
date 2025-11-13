@@ -14,8 +14,8 @@ const titleSlug = title
   .replace(/^-*|-*$/g, "");
 ---
 
-<nav class="fixed top-[50%] left-4 hidden w-80 -translate-y-1/2 2xl:block">
-  <div class="rounded-xl border border-gray-300/70 bg-linear-to-br from-gray-50 to-white p-5 backdrop-blur-sm">
+<nav id="table-of-contents" class="fixed top-[50%] left-4 hidden w-80 -translate-y-1/2 2xl:block">
+  <div class="rounded-xl border border-gray-300/70 bg-linear-to-br from-gray-50 to-white p-5 shadow-sm backdrop-blur-sm">
     <h2 class="mb-4 text-sm font-bold tracking-wider text-gray-700 uppercase">
       <a href={`#${titleSlug}`} class="flex items-center gap-2 transition-colors duration-200 hover:text-gray-950">
         <svg
@@ -39,21 +39,17 @@ const titleSlug = title
         Table of Contents
       </a>
     </h2>
-    <div class="max-h-[calc(80vh-8rem)] overflow-y-auto pr-2">
-      <ul class="space-y-1 text-sm">
+    <div id="toc-scroll-container" class="max-h-[calc(80vh-8rem)] overflow-y-auto pr-2">
+      <ul class="relative space-y-0.5 text-sm">
         {
           headings.map((heading) => (
-            <li class="relative">
+            <li class="relative" style={{ paddingLeft: `${(heading.depth - 2) * 12}px` }}>
               <a
                 href={`#${heading.slug}`}
-                class="toc-link group relative block rounded-lg px-3 py-1.5 wrap-break-word text-gray-600 transition-all duration-300 hover:bg-gray-950/5 hover:text-gray-950"
+                class="toc-link group relative flex items-center gap-2 rounded-lg px-3 py-2 text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:text-gray-950"
                 data-slug={heading.slug}
-                style={{
-                  marginLeft: `${(heading.depth - 2) * 12}px`,
-                }}
               >
-                <span class="toc-indicator absolute top-1/2 left-0 h-0 w-0.5 -translate-y-1/2 rounded-full bg-gray-950 transition-all duration-300" />
-                <span class="relative transition-transform duration-300 group-hover:translate-x-1">{heading.text}</span>
+                <span class="block leading-snug">{heading.text}</span>
               </a>
             </li>
           ))
@@ -63,86 +59,125 @@ const titleSlug = title
   </div>
 </nav>
 
-<script is:inline>
-  document.addEventListener("astro:page-load", () => {
-    const tocLinks = document.querySelectorAll(".toc-link");
-    const tocContainer = document.querySelector("nav .overflow-y-auto");
-    const headings = Array.from(tocLinks)
-      .map((link) => {
-        const slug = link.getAttribute("data-slug");
-        if (!slug) return null;
-        return document.getElementById(slug);
-      })
-      .filter(Boolean);
+<script>
+  function initTableOfContents() {
+    const tocNav = document.getElementById("table-of-contents");
+    if (!tocNav) return;
+
+    const tocLinks = document.querySelectorAll<HTMLAnchorElement>(".toc-link");
+    const tocScrollContainer = document.getElementById("toc-scroll-container");
+
+    if (tocLinks.length === 0) return;
+
+    // Collect all heading elements
+    const headings: Array<{ element: HTMLElement; slug: string }> = [];
+    tocLinks.forEach((link) => {
+      const slug = link.getAttribute("data-slug");
+      if (slug) {
+        const element = document.getElementById(slug);
+        if (element) {
+          headings.push({ element, slug });
+        }
+      }
+    });
 
     if (headings.length === 0) return;
 
-    let lastActiveSlug = null;
+    let isScrolling = false;
+    let currentActiveSlug: string | null = null;
 
-    const setActiveLink = (slug) => {
-      if (lastActiveSlug === slug) return;
+    function setActiveLink(slug: string | null) {
+      if (currentActiveSlug === slug) return;
+      currentActiveSlug = slug;
 
       tocLinks.forEach((link) => {
         const linkSlug = link.getAttribute("data-slug");
-        const indicator = link.querySelector(".toc-indicator");
+        const isActive = linkSlug === slug;
 
-        if (slug && linkSlug === slug) {
-          link.classList.add("!text-gray-950", "!font-semibold", "!bg-white");
-          link.classList.remove("text-gray-600");
+        if (isActive) {
+          link.classList.add("!bg-gray-950/10");
 
-          if (indicator) {
-            indicator.style.height = "1.5rem";
-            indicator.style.width = "3px";
-          }
-
-          if (tocContainer) {
+          // Auto scroll TOC to show active item
+          if (tocScrollContainer && !isScrolling) {
             const linkRect = link.getBoundingClientRect();
-            const containerRect = tocContainer.getBoundingClientRect();
+            const containerRect = tocScrollContainer.getBoundingClientRect();
 
             if (linkRect.top < containerRect.top || linkRect.bottom > containerRect.bottom) {
               link.scrollIntoView({ behavior: "smooth", block: "center" });
             }
           }
         } else {
-          link.classList.remove("!text-gray-950", "!font-semibold", "!bg-white");
-          link.classList.add("text-gray-600");
-
-          if (indicator) {
-            indicator.style.height = "0";
-            indicator.style.width = "0.5px";
-          }
+          link.classList.remove("!bg-gray-950/10");
         }
       });
+    }
 
-      lastActiveSlug = slug;
-    };
+    function findActiveHeading() {
+      // Find the heading closest to the top of the viewport
+      let activeSlug: string | null = null;
+      const scrollPosition = window.scrollY + 100; // Offset for better UX
 
-    const updateActiveLinkOnScroll = () => {
-      const activationPoint = window.innerHeight * 0.25;
-      let currentActiveSlug = null;
+      for (let i = headings.length - 1; i >= 0; i--) {
+        const heading = headings[i];
+        const headingTop = heading.element.offsetTop;
 
-      for (const heading of headings) {
-        if (heading.getBoundingClientRect().top <= activationPoint) {
-          currentActiveSlug = heading.id;
-        } else {
+        if (scrollPosition >= headingTop) {
+          activeSlug = heading.slug;
           break;
         }
       }
 
-      setActiveLink(currentActiveSlug);
-    };
+      setActiveLink(activeSlug);
+    }
 
+    // Handle scroll events
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    function onScroll() {
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 100);
+
+      findActiveHeading();
+    }
+
+    // Handle clicks on TOC links
     tocLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        const clickedSlug = link.getAttribute("data-slug");
-        setActiveLink(clickedSlug);
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        isScrolling = true;
+
+        const slug = link.getAttribute("data-slug");
+        if (slug) {
+          const target = document.getElementById(slug);
+          if (target) {
+            setActiveLink(slug);
+            target.scrollIntoView({ behavior: "smooth" });
+
+            // Update URL without jumping
+            history.pushState(null, "", `#${slug}`);
+
+            setTimeout(() => {
+              isScrolling = false;
+            }, 1000);
+          }
+        }
       });
     });
 
-    window.addEventListener("scroll", updateActiveLinkOnScroll, {
-      passive: true,
-    });
+    // Listen to scroll events
+    window.addEventListener("scroll", onScroll, { passive: true });
 
-    updateActiveLinkOnScroll();
-  });
+    // Initial check
+    findActiveHeading();
+  }
+
+  // Initialize on page load
+  document.addEventListener("astro:page-load", initTableOfContents);
+
+  // Also initialize immediately if DOM is already loaded
+  if (document.readyState !== "loading") {
+    initTableOfContents();
+  }
 </script>
