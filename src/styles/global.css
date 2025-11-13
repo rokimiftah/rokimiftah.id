@@ -115,7 +115,7 @@ article {
 }
 
 .copy-code {
-  @apply absolute top-[7px] right-1 cursor-pointer text-xs;
+  @apply absolute top-[7px] right-2.5 cursor-pointer text-xs;
 }
 
 /* Table styles */
