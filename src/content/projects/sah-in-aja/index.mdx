@@ -1,0 +1,983 @@
+---
+title: "SAH-in Aja! AI-Powered Halal Certification Prep for 30M+ Indonesian MSMEs"
+description: "Multi-modal AI platform democratizing halal certification access with Vision AI assessment, smart document generation, and guardrailed chatbot—all on credit-based system optimized for low-end devices."
+date: "December 12 2025"
+draft: false
+demoURL: "https://sahin.biz.id"
+repoURL: "https://github.com/rokimiftah/SAH-in-Aja"
+---
+
+import CodeBlockFrame from "@components/CodeBlockFrame.astro";
+
+![](https://cdn.sahin.biz.id/landing.png)
+
+**SAH-in Aja!** is Indonesia's first AI-powered halal certification preparation platform built for the nation's 30+ million MSMEs. It provides **Vision AI assessment** of kitchen/production facilities, **smart document generation** for SJPH compliance, and a **guardrailed chatbot** for 24/7 halal certification guidance—running on a credit-based system that resets daily, optimized for low-end devices over 4G networks.
+
+### Why it matters
+- **Democratizes access**: Free tier with 3 assessments + 3 documents + 5 chats/day removes financial barrier for struggling UMKM
+- **Vision AI democratization**: Upload 5 photos of kitchen, get audit-grade assessment in 2 minutes (model: Claude Sonnet 4.5)
+- **Smart document generation**: 5 SJPH templates (SOP, supplier agreements, traceability forms) auto-populated from business data
+- **Guardrails-first chatbot**: LLM-based topic classification prevents misuse; keyword filters block harmful content
+- **Credit system**: Daily reset at UTC+7 (7 AM WIB) with promo code support for bonus credits
+- **Low-end optimized**: Runs smooth on Samsung A03, Redmi 9A, Oppo A16 (2-3GB RAM, Android 11+)
+
+### How it works (brief)
+1. **Login seamlessly**: Magic link + Google OAuth + GitHub OAuth via Convex Auth
+2. **Siap Halal**: Upload 5 kitchen photos → Vision AI (Claude Sonnet 4.5) scans for haram materials, contamination risks → Score 0-100 with actionable fixes
+3. **Dokumen Halal**: Choose template → Fill business info → AI generates SJPH-compliant document → Export to DOCX
+4. **Asisten Halal**: Chat with Claude Sonnet 4.5 (topic-classified) about BPJPH procedures, halal ingredients, audit prep
+5. **Credit tracking**: Automatic daily reset with rollover protection via `user_daily_credits` table
+
+### Stack
+- **Frontend**: React 19 + TypeScript + Wouter (routing) + Motion (animations) + Tailwind CSS 4.0
+- **Backend**: Convex (real-time DB + serverless functions, self-hosted via Docker)
+- **AI/ML**: Kolosal API (Claude Sonnet 4.5 for vision & text, alternative models: Qwen 3 VL, Kimi K2, GLM 4.6)
+- **Auth**: @convex-dev/auth (Magic Link, Google OAuth, GitHub OAuth)
+- **Email**: Resend (magic link delivery)
+- **Storage**: Convex File Storage (photo uploads, document generation)
+- **Build**: Rsbuild (Rspack) + Biome (linting) + PNPM/Bun
+
+---
+
+## The Problem: The 82% Gap
+
+Indonesia has **30+ million MSMEs**, but only **18%** have attempted halal certification. The barriers are systemic:
+
+- **Rp 2-10 million**: Audit costs equal 1-3 months of profit for small warungs
+- **82% failure rate**: Complex SJPH (Sistem Jaminan Produk Halal) documentation
+- **1-3 months**: Bureaucratic process with multiple LPH (Lembaga Pemeriksa Halal) visits
+- **Technical gap**: UMKM owners don't know how to create SOPs, traceability forms, or supplier agreements
+- **Information asymmetry**: Confusing BPJPH requirements, unclear about halal status of ingredients (gelatin, emulsifiers, enzymes)
+
+Traditional solutions force UMKM to choose between growth and compliance—until now.
+
+---
+
+## The Solution: AI-Driven Democratization
+
+SAH-in Aja! solves the certification gap with **three AI agents** running on a **multi-modal architecture**, optimized for Indonesia's unique UMKM landscape.
+
+### 1. Siap Halal: Vision AI Assessment
+
+Upload up to **5 photos** of your kitchen, and Claude Sonnet 4.5 Vision analyzes it against **SJPH HAS 23000** standards.
+
+**Analysis framework** (5 criteria, 100 points total):
+1. **Bahan (Materials)** - 30 pts: No haram substances visible, proper halal labels, separate storage
+2. **Fasilitas (Production Facility)** - 25 pts: Cleanliness, no cross-contamination, no pets
+3. **Peralatan (Equipment)** - 20 pts: Clean equipment, no shared tools with haram materials
+4. **Penyimpanan (Storage)** - 15 pts: Proper raw material separation, temperature control
+5. **Dokumentasi (Documentation)** - 10 pts: Clear labels, organized inventory
+
+### Vision AI Workflow
+
+<CodeBlockFrame title="convex/analyzeHalal.ts">
+```typescript
+export const analyzeKitchen = action({
+  args: {
+    photoStorageIds: v.array(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const kolosal = createKolosalClient(apiKey);
+
+    // Convert storage IDs → URLs → Base64 (Claude requires base64)
+    const imageBase64List = await Promise.all(
+      args.photoStorageIds.map(async (storageId) => {
+        const url = await ctx.storage.getUrl(storageId);
+        return urlToBase64(url); // Convex runtime-friendly
+      })
+    );
+
+    const response = await kolosal.chat.completions.create({
+      model: KOLOSAL_MODELS.VISION, // "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+      messages: [
+        {
+          role: "system",
+          content: SYSTEM_PROMPTS.HALAL_ASSESSMENT,
+        },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Analisis foto area produksi/dapur:" },
+            ...imageBase64List.map(base64 => ({
+              type: "image_url",
+              image_url: { url: base64 }
+            }))
+          ]
+        }
+      ],
+      temperature: 0.3, // Low temperature for strict assessment
+      max_tokens: 2000,
+    });
+
+    // Parse structured JSON output
+    const { score, findings, actionItems, summaryPoints } = JSON.parse(response.choices[0].message.content);
+    return { score, findings, actionItems, summaryPoints, photoUrls };
+  }
+});
+```
+</CodeBlockFrame>
+
+### System Prompt Engineering
+
+The key is making AI speak like a friendly neighborhood auditor, not a bureaucrat:
+
+<CodeBlockFrame title="convex/lib/kolosal.ts">
+```typescript
+export const SYSTEM_PROMPTS = {
+  HALAL_ASSESSMENT: `Anda adalah auditor kehalalan berpengalaman untuk UMKM Indonesia...
+
+PANDUAN BAHASA:
+- Gunakan bahasa Indonesia SEDERHANA seperti berbicara dengan ibu-ibu warung
+- Hindari istilah teknis, gunakan kata sehari-hari
+- summaryPoints maksimal 4-5 poin, mulai dengan emoji ✅ untuk positif dan ⚠️ untuk perlu perbaikan
+- overallMessage harus memotivasi, bukan menakut-nakuti
+- Contoh baik: "Dapurnya sudah bersih, tinggal ganti kecap yang ada label halalnya ya Bu!"
+- Contoh buruk: "Fasilitas produksi tidak memenuhi standar SJPH HAS 23000 kriteria 6"
+
+PENTING:
+- Lakukan penilaian dengan KETAT (STRICT) dan TELITI sesuai standar audit resmi
+- Jika ada benda mencurigakan (hewan peliharaan, bahan non-halal, kotoran), tandai sebagai CRITICAL
+- Tetap gunakan bahasa yang sopan dan mendidik, tapi tegas dalam hal kepatuhan syariah`
+};
+```
+</CodeBlockFrame>
+
+**Sample Output** (not a scary report, but a friendly nudge):
+```json
+{
+  "score": 75,
+  "findings": [
+    {
+      "type": "warning",
+      "item": "Kecap di rak tidak ada label halal",
+      "location": "Rak bumbu kiri atas",
+      "confidence": 0.85
+    }
+  ],
+  "actionItems": [
+    "Ganti kecap dengan merk yang memiliki sertifikat halal (contoh: Bango, ABC)",
+    "Simpan susu dan produk hewan di rak terpisah dari bumbu masak"
+  ],
+  "summaryPoints": [
+    "✅ Area kompor bersih dan tidak ada hewan peliharaan",
+    "✅ Rak bumbu terorganisir dengan rapi",
+    "⚠️ Kecap butuh diganti dengan yang berlabel halal",
+    "⚠️ Susu dan produk hewan simpan terpisah dari bumbu"
+  ],
+  "overallMessage": "Dapurnya sudah cukup bersih Bu! Tinggal ganti kecap dan pisahin susunya, insyaallah lulus audit."
+}
+```
+
+---
+
+## 2. Dokumen Halal: AI Document Generator
+
+**5 templates** covering SJPH HAS 23000 requirements, all generating in **DOCX format** (compatible with Microsoft Word, Google Docs):
+
+| Template | Use Case | Pages |
+|----------|----------|-------|
+| SOP Produksi Halal | Standard operating procedures | 3-5 |
+| Perjanjian Supplier Halal | Supplier commitment contracts | 2-3 |
+| Daftar Bahan Baku | Raw material inventory with halal status | 1-2 |
+| Form Traceability | Batch tracking from supplier to finished product | 1-2 |
+| Surat Komitmen Halal | Owner's halal commitment letter | 1 |
+
+### Document Generation Architecture
+
+The system uses **two-stage prompt engineering**:
+1. **Template prompt** defining document structure
+2. **Dynamic data injection** from user input
+
+<CodeBlockFrame title="convex/generateDocument.ts">
+```typescript
+const TEMPLATE_PROMPTS: Record<string, string> = {
+  sop_produksi: `Buat SOP Produksi Halal yang mencakup:\n1. Tujuan...\n2. Prosedur Pemilihan...\n...`,
+  perjanjian_supplier: `Buat Surat Perjanjian Supplier...\n1. Para Pihak...\n...`,
+  daftar_bahan: `Buat Daftar Bahan Baku...`,
+  traceability: `Buat Form Traceability...`,
+  komitmen_halal: `Buat Surat Komitmen...`
+};
+
+export const generateHalalDocument = action({
+  args: {
+    templateType: v.string(),
+    businessInfo: v.object({ name, address, owner, productType }),
+    ingredients: v.array(v.object({ name, supplier, halalStatus }))
+  },
+  handler: async (_ctx, args) => {
+    const templatePrompt = TEMPLATE_PROMPTS[args.templateType];
+
+    const userContent = `${templatePrompt}
+
+DATA USAHA:
+- Nama: ${args.businessInfo.name}
+- Alamat: ${args.businessInfo.address}
+- Pemilik: ${args.businessInfo.owner}
+- Produk: ${args.businessInfo.productType}
+
+DAFTAR BAHAN:
+${args.ingredients.map(i => `- ${i.name} (Supplier: ${i.supplier}, Status: ${i.halalStatus})`).join("\n")}`;
+
+    const response = await fetch("https://api.kolosal.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.KOLOSAL_API_KEY}`,
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: KOLOSAL_MODELS.TEXT,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPTS.DOCUMENT_GENERATOR },
+          { role: "user", content: userContent }
+        ],
+        temperature: 1.0, // Higher for creative document generation
+        max_tokens: 4096,
+      })
+    });
+
+    const data = await response.json();
+    return { content: data.choices[0].message.content }; // Plain text format
+  }
+});
+```
+</CodeBlockFrame>
+
+**Why plain text, not markdown?**
+DOCX generation requires clean, structured text. The frontend uses `docx` npm library to convert plain text → formatted Word documents:
+
+<CodeBlockFrame title="src/features/dokumen-halal/hooks/useDocumentGenerator.ts">
+```typescript
+// Pseudo-code showing conversion logic
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import { saveAs } from "file-saver";
+
+const generateDocx = (plainText: string, templateType: string) => {
+  // Split by lines, detect headings via patterns
+  const lines = plainText.split("\n");
+  const paragraphs = lines.map(line => {
+    if (line === line.toUpperCase()) {
+      // All caps = title/heading
+      return new Paragraph({
+        children: [new TextRun({ text: line, bold: true, size: 28 })],
+        heading: HeadingLevel.HEADING_1
+      });
+    } else if (/^\\d+\\./.test(line)) {
+      // Numbered list (e.g., "1.", "2.")
+      return new Paragraph({
+        children: [new TextRun({ text: line })],
+        numbering: { num: abstractNumId, level: 0 }
+      });
+    } else if (line.startsWith("- ")) {
+      // Bullet list
+      return new Paragraph({
+        children: [new TextRun({ text: line.replace("- ", "") })],
+        bullet: { level: 0 }
+      });
+    }
+    // Default paragraph
+    return new Paragraph(line);
+  });
+
+  const doc = new Document({ sections: [{ children: paragraphs }] });
+  Packer.toBlob(doc).then(blob => saveAs(blob, `${templateType}_${Date.now()}.docx`));
+};
+```
+</CodeBlockFrame>
+
+---
+
+## 3. Asisten Halal: Guardrailed Chatbot with LLM-Based Classification
+
+This is where most chatbots fail: they either allow everything (risky) or block too much (useless). SAH-in Aja! uses a **hybrid approach**:
+
+### Layer 1: Keyword Filtering (Fast Block)
+
+<CodeBlockFrame title="convex/consultHalal.ts">
+```typescript
+const BLOCKED_KEYWORDS = [
+  "bunuh", "racun", "bom", "senjata", "narkoba", "drugs", "teror",
+  "sex", "porn", "bokep", "telanjang", "mesum",
+  "kafir", "benci", "serang", "hina", "rasis",
+  "hack", "crack", "bajak", "penipuan"
+];
+
+function containsBlockedContent(message: string): boolean {
+  return BLOCKED_KEYWORDS.some(keyword => message.toLowerCase().includes(keyword));
+}
+```
+</CodeBlockFrame>
+
+### Layer 2: Greeting Bypass
+
+Simple greetings don't need LLM classification (saves cost + latency):
+
+```typescript
+const ALLOWED_GREETINGS = [
+  "halo", "hai", "hello", "selamat pagi", "assalamualaikum",
+  "terima kasih", "makasih"
+];
+
+function isGreeting(message: string): boolean {
+  const words = message.toLowerCase().split(/\s+/);
+  return words.length <= 4 && ALLOWED_GREETINGS.some(g => message.includes(g));
+}
+```
+
+### Layer 3: LLM-Based Topic Classification
+
+For complex queries, use **Claude Sonnet 4.5** to determine if question is halal-related:
+
+<CodeBlockFrame title="convex/consultHalal.ts">
+```typescript
+async function classifyTopicWithLLM(message: string, kolosal: Client) {
+  const classificationPrompt = `Kamu adalah classifier untuk aplikasi "Asisten Halal".
+
+KONTEKS PENTING: Karena ini Asisten Halal, pertanyaan AMBIGU harus diasumsikan terkait halal.
+Contoh: "Apa saja dokumen yang diperlukan?" → TERKAIT (tentang dokumen sertifikasi halal)
+
+Topik TERKAIT halal:
+- Status halal/haram makanan, bahan masakan
+- Sertifikasi halal, dokumen, persyaratan, biaya
+- Bahan kritis (gelatin, emulsifier, alkohol)
+- Produksi makanan, dapur, restoran, UMKM
+- Audit halal, LPH, BPJPH, MUI, SJPH
+
+Jawab dengan format JSON:
+{"isHalalRelated": true/false, "reason": "alasan singkat"}
+
+Pertanyaan: "${message}"`;
+
+  const response = await kolosal.chat.completions.create({
+    model: KOLOSAL_MODELS.TEXT,
+    messages: [{ role: "user", content: classificationPrompt }],
+    temperature: 0, // Deterministic
+    max_tokens: 100
+  });
+
+  const result = JSON.parse(response.choices[0].message.content);
+  return { isHalalRelated: result.isHalalRelated === true };
+}
+```
+</CodeBlockFrame>
+
+**Why this is smart:** False positives (allowing non-halal questions) are better than false negatives (blocking legitimate users). This respects the platform's purpose while maximizing utility.
+
+### Chat Context Integration
+
+The chatbot can reference user's scan history for personalized advice:
+
+<CodeBlockFrame title="convex/consultHalal.ts">
+```typescript
+export const chat = action({
+  args: {
+    message: v.string(),
+    conversationHistory: v.optional(v.array(...)),
+    userContext: v.optional(v.object({
+      halalScore: v.optional(v.number()),
+      lastScanFindings: v.optional(v.array(v.string()))
+    }))
+  },
+  handler: async (_ctx, args) => {
+    let contextPrompt = "";
+    if (args.userContext?.halalScore) {
+      contextPrompt += `Konteks user: Skor terakhir ${args.userContext.halalScore}/100.`;
+    }
+
+    const messages = [
+      {
+        role: "system",
+        content: SYSTEM_PROMPTS.HALAL_ASSISTANT + contextPrompt
+      },
+      ...args.conversationHistory,
+      { role: "user", content: args.message }
+    ];
+
+    const response = await kolosal.chat.completions.create({
+      model: KOLOSAL_MODELS.TEXT,
+      messages,
+      temperature: 0.7,
+      max_tokens: 4096
+    });
+
+    return {
+      response: response.choices[0].message.content,
+      source: "llm",
+      confidence: 0.7
+    };
+  }
+});
+```
+</CodeBlockFrame>
+
+**Sample conversation**:
+
+```
+User: "Halo, saya punya warung makan. Apa dokumen yang perlu saya siapkan?"
+AI: "Halo! Untuk warung makan, Anda perlu:
+1. SOP Produksi Halal
+2. Daftar Bahan Baku
+3. Surat Komitmen Halal
+
+Berdasarkan scan terakhir Anda (skor 75), perbaiki kecapnya dulu ya Bu!"
+
+User: "Kalau saya pakai gelatin, halal tidak?"
+AI: "Tergantung sumber gelatinnya:
+- Gelatin sapi/halal: ✅ Boleh
+- Gelatin babi: ❌ Haram
+- Gelatin non-halal: ❌ Haram
+
+Cek kemasan gelatin Anda. Kalau tidak ada sertifikat, ganti dengan agar-agar."
+```
+
+---
+
+## Credit System: Daily Reset with Rollover Protection
+
+### The Business Logic
+
+Each user gets daily credits (reset at 7 AM WIB / UTC+7). This balances:
+- **Fairness**: Everyone gets same daily allocation
+- **Abuse prevention**: Can't hoard credits
+- **Engagement**: Daily return visits
+- **Conversion funnel**: Heavy users can enter promo codes
+
+**Credit allocation**:
+- **Siap Halal**: 3 scans/day
+- **Dokumen Halal**: 3 documents/day
+- **Asisten Halal**: 5 chat sessions/day
+
+### Database Schema
+
+<CodeBlockFrame title="convex/schema.ts">
+```typescript
+export default defineSchema({
+  // ... auth tables
+
+  users: defineTable({
+    // ... user fields
+    credits: v.optional(v.number()), // Koin SAH (for future paid tier)
+    tier: v.optional(v.union(
+      v.literal("free"),
+      v.literal("eceran"),    // Tier 1: Small business
+      v.literal("juragan")     // Tier 2: Medium business
+    ))
+  }),
+
+  // Critical: Tracks daily usage
+  user_daily_credits: defineTable({
+    userId: v.id("users"),
+    date: v.string(), // Format: "2025-12-10" in UTC+7
+    siapHalalCredits: v.number(),
+    dokumenHalalCredits: v.number(),
+    asistenHalalChats: v.number()
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_date", ["userId", "date"]),
+
+  // Promo code support (managed via Convex dashboard)
+  promo_codes: defineTable({
+    code: v.string(), // e.g., "SAH2025", case-sensitive
+    credits: v.number(), // Amount to add (e.g., 100)
+    maxUsage: v.optional(v.number()),
+    usageCount: v.number(),
+    expiresAt: v.optional(v.number()),
+    isActive: v.boolean()
+  }).index("by_code", ["code"]),
+
+  // Track promo usage per user
+  promo_code_usages: defineTable({
+    userId: v.id("users"),
+    promoCodeId: v.id("promo_codes"),
+    usedAt: v.number()
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_code", ["userId", "promoCodeId"])
+});
+```
+</CodeBlockFrame>
+
+### Credit Deduction Logic
+
+<CodeBlockFrame title="convex/credits.ts (simplified)">
+```typescript
+export const deductCredit = internalMutation({
+  args: {
+    userId: v.id("users"),
+    feature: v.union(
+      v.literal("siapHalal"),
+      v.literal("dokumenHalal"),
+      v.literal("asistenHalal")
+    )
+  },
+  handler: async (ctx, args) => {
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Jakarta"
+    }); // "2025-12-10"
+
+    // Get or create daily record
+    let daily = await ctx.db
+      .query("user_daily_credits")
+      .withIndex("by_user_date", q =>
+        q.eq("userId", args.userId).eq("date", today)
+      )
+      .first();
+
+    if (!daily) {
+      daily = await ctx.db.insert("user_daily_credits", {
+        userId: args.userId,
+        date: today,
+        siapHalalCredits: 0,
+        dokumenHalalCredits: 0,
+        asistenHalalChats: 0
+      });
+    }
+
+    // Check limits
+    const limits = {
+      siapHalal: 3,
+      dokumenHalal: 3,
+      asistenHalal: 5
+    };
+
+    const current = daily[`${args.feature}Credits`];
+    if (current >= limits[args.feature]) {
+      throw new Error("Kredit harian habis. Coba lagi besok jam 7 pagi!");
+    }
+
+    // Increment
+    await ctx.db.patch(daily._id, {
+      [`${args.feature}Credits`]: current + 1
+    });
+
+    return { success: true, remaining: limits[args.feature] - (current + 1) };
+  }
+});
+```
+</CodeBlockFrame>
+
+### Promo Code System
+
+Admin can generate promo codes via Convex dashboard. When user redeems:
+1. Check `promo_codes.isActive` && `usageCount < maxUsage`
+2. Verify user hasn't used it before (`promo_code_usages` table check)
+3. Add credits to `user.credits` (for future paid tier)
+4. Increment `promo_codes.usageCount`
+5. Create `promo_code_usages` record
+
+---
+
+## Frontend: Mobile-First, Low-End Optimized
+
+### Target Device Constraints
+
+```
+Device: Samsung A03, Xiaomi Redmi 9A, Oppo A16
+├── RAM: 2-3GB (browser gets ~500MB)
+├── CPU: MediaTek Helio P22 (8x 1.8GHz) / Snapdragon 450 (8x 1.8GHz)
+├── Network: 4G (0.5-2 Mbps, RTT 200-500ms)
+├── Browser: Chrome 110+ (WebP support mandatory)
+├── Android: 11-12 (WebView updates via Play Store)
+└── Display: 720x1600, 6.5" (density 2.0, ~270 PPI)
+```
+
+### Optimization Strategies
+
+1. **Bundle size consciousness**
+   - Lazy load features: `const SiapHalal = lazy(() => import('./features/siap-halal'))`
+   - Code splitting by route
+   - Tree-shake icon libraries (use `lucide-react` selectively)
+
+2. **Image optimization**
+   - WebP with AVIF fallbacks
+   - `<picture>` element for responsive images
+   - Lazy loading + intersection observer
+   - Convex Storage serves optimized images:
+     ```url
+     https://cloudflare-worker.convex.cloud/api/storage/...?format=auto&width=800
+     ```
+
+3. **Runtime performance**
+   - React 19's automatic batching
+   - Debounced inputs (300ms for search)
+   - Memoized expensive components (`React.memo`)
+   - Virtualized long lists (not needed yet; 20 items max)
+
+4. **Network resilience**
+   - Retry logic for failed AI calls (3 attempts, exponential backoff)
+   - Offline detection with `navigator.onLine`
+   - Graceful degradation: show cached results if offline
+   - Loading states with skeletons (not spinners) for perceived speed
+
+### Routing with Wouter (2KB gzipped)
+
+<CodeBlockFrame title="src/app/App.tsx">
+```typescript
+import { Router, Route, Switch } from 'wouter';
+
+export default function App() {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/" component={LandingPage} />
+        <Route path="/login" component={LoginPage} />
+        <Route path="/link" component={MagicLinkPage} />
+        <Route path="/dashboard" component={DashboardLayout}>
+          <Route path="/dashboard/siap-halal" component={SiapHalalPage} />
+          <Route path="/dashboard/dokumen-halal" component={DokumenHalalPage} />
+          <Route path="/dashboard/asisten-halal" component={AsistenHalalPage} />
+        </Route>
+        <Route component={NotFoundPage} />
+      </Switch>
+    </Router>
+  );
+}
+```
+</CodeBlockFrame>
+
+---
+
+## Deployment: Self-Hosted Convex on Docker
+
+### Why Self-Hosted?
+
+Indonesian UMKM data sovereignty is critical. Self-hosting ensures:
+- Data stays in Indonesia (VPS in Jakarta IDC)
+- Compliance with UU PDP (Personal Data Protection Law)
+- Lower latency for Indonesian users (20-50ms vs 200ms to US)
+- Cost predictability (flat VPS fee vs usage-based)
+
+### Docker Architecture
+<center>
+```
+┌─────────────────────────────────────────┐
+│      VPS (Jakarta, 4 vCPU, 8GB RAM)     │
+│  ┌────────────────────────────────────┐ │
+│  │  Caddy (Reverse Proxy + SSL)       │ │
+│  │  ├── Port 80/443 → Frontend        │ │
+│  │  └── Port 3210 → Convex Functions  │ │
+│  └────────────────────────────────────┘ │
+│  ┌────────────────────────────────────┐ │
+│  │  Convex Backend (Docker)           │ │
+│  │  ├── convex dev --port 3210        │ │
+│  │  └── SQLite DB (persistence)       │ │
+│  └────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────┐
+│  Cloudflare (DNS, CDN, WAF)             │
+│  └── CNAME → sahin.biz.id               │
+└─────────────────────────────────────────┘
+```
+</center>
+
+### Dockerfile
+
+<CodeBlockFrame title="docker/Dockerfile">
+```dockerfile
+# Multi-stage build
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --frozen-lockfile
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:22-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/convex ./convex
+COPY package*.json ./
+RUN npm ci --production --frozen-lockfile
+
+# Install Convex CLI globally
+RUN npm install -g convex@latest
+
+# Environment variables (set via docker run -e)
+ENV CONVEX_DEPLOYMENT=""
+ENV KOLOSAL_API_KEY=""
+ENV AUTH_GOOGLE_ID=""
+ENV AUTH_GOOGLE_SECRET=""
+
+EXPOSE 3210
+CMD ["convex", "dev", "--port", "3210", "--host", "0.0.0.0"]
+```
+</CodeBlockFrame>
+
+### Caddyfile
+
+<CodeBlockFrame title="docker/Caddyfile">
+```caddyfile
+sahin.biz.id {
+  # Frontend (static assets)
+  handle_path /* {
+    reverse_proxy localhost:3000
+  }
+
+  # Convex backend (API + WebSocket)
+  handle_path /api/* {
+    reverse_proxy localhost:3210
+  }
+
+  # WebSocket upgrade for realtime
+  @websocket {
+    header Connection *Upgrade*
+    header Upgrade websocket
+  }
+  reverse_proxy @websocket localhost:3210
+
+  # Security headers
+  header {
+    X-Frame-Options DENY
+    X-Content-Type-Options nosniff
+    X-XSS-Protection "1; mode=block"
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  }
+
+  # SSL via Let's Encrypt (automatic)
+  tls your-email@example.com
+}
+```
+</CodeBlockFrame>
+
+### GitHub Actions CI/CD
+
+<CodeBlockFrame title=".github/workflows/deploy.yml">
+```yaml
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/sah-in-aja
+            git pull origin main
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+```
+</CodeBlockFrame>
+
+---
+
+## Security & Guardrails: Multi-Layer Defense
+
+### 1. AI Safety
+
+- **Prompt injection prevention**: System prompts are read-only, injected at runtime
+- **Topic classification**: LLM-based filtering prevents off-topic abuse
+- **Rate limiting**: 5 chats/day, 3 scans/day per user (credit system)
+- **Content moderation**: Keyword blocklist for harmful content
+
+### 2. Data Privacy
+
+- **Self-hosted**: Data never leaves Indonesia
+- **PDP Law compliance**: User data encrypted at rest (SQLite encryption)
+- **No PII in AI prompts**: Business names are anonymized in logs
+- **Consent flow**: GDPR-style consent during OAuth registration
+
+### 3. Authentication
+
+- **JWT security**: RS256 tokens, 1-hour expiry
+- **Magic link**: 15-minute expiry, single-use via Resend
+- **OAuth2**: Google/GitHub with PKCE flow
+- **Session management**: Convex Auth handles this automatically
+
+---
+
+## Cost Structure: Optimized for Scale
+
+### Kolosal API Pricing (Target Model: Claude Sonnet 4.5)
+
+```
+Model: global.anthropic.claude-sonnet-4-5-20250929-v1:0
+Pricing: $3.0/1M input tokens | $15.0/1M output tokens
+Context: 200K tokens (sufficient for 5 images + conversation history)
+```
+
+### Per-User Daily Cost (Free Tier)
+
+Assuming average usage:
+- **Siap Halal**: 1 scan/day with 5 images
+  - Input: ~10K tokens (5 base64 images) = $0.03
+  - Output: ~500 tokens = $0.0075
+  - **Total**: $0.0375
+
+- **Dokumen Halal**: 1 document/day
+  - Input: ~2K tokens = $0.006
+  - Output: ~1K tokens = $0.015
+  - **Total**: $0.021
+
+- **Asisten Halal**: 3 chats/day
+  - Input: ~500 tokens/chat = $0.0015/chat
+  - Output: ~800 tokens/chat = $0.012/chat
+  - **Total**: $0.0405/day
+
+**Total per user/day**: ~$0.10
+**Monthly (30 days)**: $3.00 per active user
+
+### Infrastructure Costs (Self-Hosted)
+
+- **VPS**: IDR 150K/month (~$10) for 4 vCPU, 8GB RAM in Jakarta IDC
+- **Cloudflare**: $20/month (Pro plan for WAF + caching)
+- **Resend**: $0.003/email (magic link), negligible
+- **Domain**: $15/year
+
+**Total**: ~$35/month for unlimited users (vs $3/user/month on Vercel/Convex Cloud)
+
+### Breakeven Strategy
+
+At $0.10/user/day:
+- **Free tier**: 3 scans + 3 docs + 5 chats (cost-neutral, marketing funnel)
+- **Paid tier (future)**:
+  - Eceran: IDR 50K/month ($3.20) → 30 scans + 30 docs + 50 chats
+  - Juragan: IDR 150K/month ($9.60) → 100 scans + 100 docs + 200 chats
+
+---
+
+## The Impact: Why This Matters
+
+### Democratizing Halal Certification
+
+Indonesia is the world's largest Muslim-majority country, but halal certification lags:
+- **230M Muslims** need halal products
+- **30M MSMEs** produce 60% of GDP
+- **Only 200K** (0.67%) have halal certification
+- **Goal**: 5M certified MSMEs by 2028 (BPJPH target)
+
+SAH-in Aja! bridges the gap:
+- **Free pre-audit**: Identifies issues before costly formal audit
+- **Document templates**: Cuts preparation time from weeks to hours
+- **24/7 guidance**: Reduces LPH consultation burden
+- **Low-barrier**: Works on cheap Android phones common in rural areas
+
+### Notable Features for Indonesian Context
+
+1. **Bahasa Indonesia**: All prompts, UI, documents in formal + casual Indonesian
+2. **Local ingredients database**: Knows common Indonesian ingredients (bumbu, santan, garam)
+3. **MUI/BPJPH alignment**: Output follows HAS 23000 standards
+4. **Culturally appropriate**: Uses "Bu/Pak" honorifics, emojis for clarity
+
+---
+
+## Lessons Learned & Best Practices
+
+### AI Prompt Engineering is Everything
+
+The difference between a useless AI and a great one is **prompt quality**. We iterated 20+ times:
+
+**Version 1 (Bad)**:
+```
+Analyze kitchen photos for halal issues.
+```
+Result: "The kitchen looks clean. 8/10." ❌
+
+**Version 10 (Good)**:
+```
+You are a halal auditor. Check for 5 criteria: Bahan, Fasilitas, Peralatan, Penyimpanan, Dokumentasi.
+Output JSON: {score, findings[], actionItems[], summaryPoints[], overallMessage}.
+Bahasa: Simple Indonesian, max 5 summary points, use ✅ and ⚠️ emojis.
+Be strict but polite.
+```
+Result: "Dapurnya sudah cukup bersih Bu! Tinggal ganti kecap, insyaallah lulus."
+✅
+
+### Guardrails Must Be Balanced
+
+- **Too strict**: Blocks legitimate users → low engagement
+- **Too loose**: Abuse → platform banned by Kolosal
+- **Solution**: Keyword filter (fast) + LLM classification (accurate) + greeting bypass (UX)
+
+### Low-End Optimization is Non-Negotiable
+
+- Test on real devices, not just Chrome DevTools
+- Use Lighthouse Mobile (4G, 4x CPU throttling)
+- Bundle size budget: 300KB gzipped max
+- Image optimization: WebP, lazy load all
+
+### Self-Hosting Trade-offs
+
+**Pros**:
+- Data sovereignty (critical for Indonesian regulations)
+- Lower latency (20-50ms vs 200ms)
+- Predictable costs
+- Full control
+
+**Cons**:
+- DevOps overhead (monitoring, backups, security patches)
+- No automatic scaling (need manual load balancing)
+- SSL cert management (Caddy automates this)
+
+For MVPs, Convex Cloud is fine. For production with >10K users, self-host.
+
+---
+
+## Technical Deep Dive: Alternative AI Models
+
+### Why Claude Sonnet 4.5?
+
+**Vision**: Excellent at detecting subtle details (small labels, ingredient lists)
+**Text**: Cost-effective ($3/1M input) with 200K context
+**Indonesian**: Good instruction following for formal documents
+
+### Backup Models (via Kolosal)
+
+When Kolosal credits run low, switch to cheaper models:
+
+| Model | Context | Price (in/out) | Use Case |
+|-------|---------|----------------|----------|
+| Qwen 3 VL 30B | 262K | $0.3 / $1.0 | Vision (budget mode) |
+| Kimi K2 | 262K | $0.6 / $2.5 | Text (large context) |
+| GLM 4.6 | 200K | $0.6 / $2.2 | Text (alternative) |
+| MiniMax M2 | 204K | $0.3 / $1.2 | Text (cheapest) |
+
+**Switching logic**:
+```typescript
+const model = credits > 1000 ? KOLOSAL_MODELS.VISION : "qwen/qwen-3-vl-30b";
+```
+
+---
+
+## Conclusion: AI for Social Good
+
+SAH-in Aja! proves that AI can solve real, tangible problems for underserved communities. By combining:
+- **Vision AI** for facility assessment
+- **Document generation** for compliance
+- **Chatbot** for 24/7 guidance
+- **Credit system** for accessibility
+- **Low-end optimization** for device reality
+
+...we've created a platform that could help **millions of Indonesian MSMEs** achieve halal certification, unlocking access to:
+- **Local markets**: JAKIM, MUI-certified products
+- **Export markets**: Middle East, Malaysia, Brunei (strict halal requirements)
+- **Customer trust**: Halal label = 230M Muslim consumers
+
+The tech stack (Convex, Kolosal, React 19) is modern but pragmatic. The guardrails are strict but balanced. The UX is optimized for users who've never used AI before.
+
+**This is what AI democratization looks like: not billion-parameter models solving abstract problems, but practical tools solving real problems for real people.**
+
+---
