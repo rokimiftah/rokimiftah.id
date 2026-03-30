@@ -7,8 +7,6 @@ demoURL: "https://whatthepack.today"
 repoURL: "https://github.com/rokimiftah/whatthepack.today"
 ---
 
-import CodeBlockFrame from "@components/CodeBlockFrame.astro";
-
 ![](https://cdn.rokimiftah.id/projects/what-the-pack/1.avif)
 
 **WhatThePack.today** is an AI-powered "Mission Control" for D2C sellers. It lets owners delegate logistics (orders, inventory, packing) securely with multi-tenancy, strict RBAC, agentic automation, and a voice interface for packers—without exposing sensitive API keys.
@@ -75,9 +73,7 @@ Each business gets an isolated Auth0 Organization with its own subdomain (`store
 
 **Schema enforcement**:
 
-<CodeBlockFrame title="convex/schema.ts">
-
-```typescript
+```typescript title: convex/schema.ts
 organizations: defineTable({
   name: v.string(),
   slug: v.string(),
@@ -91,8 +87,6 @@ organizations: defineTable({
   .index("by_slug", ["slug"])
   .index("by_auth0OrgId", ["auth0OrgId"]);
 ```
-
-</CodeBlockFrame>
 
 ### 2. Granular RBAC: owner, admin, packer
 
@@ -110,9 +104,7 @@ Three roles with distinct permissions and UI surfaces:
 
 **Server-side enforcement**:
 
-<CodeBlockFrame title="convex/auth.ts">
-
-```typescript
+```typescript title: convex/auth.ts
 export async function requireRole(ctx: QueryCtx | MutationCtx, orgId: Id<"organizations">, allowedRoles: Role[]) {
   const roles = await getUserRoles(ctx);
   const userOrgId = await getUserOrgId(ctx);
@@ -126,8 +118,6 @@ export async function requireRole(ctx: QueryCtx | MutationCtx, orgId: Id<"organi
   }
 }
 ```
-
-</CodeBlockFrame>
 
 ### 3. Secure Staff Onboarding (Auth0 Management API)
 
@@ -144,9 +134,7 @@ Owner invites staff via email without ever knowing their passwords:
 
 **Implementation**:
 
-<CodeBlockFrame title="convex/mgmt.ts">
-
-```typescript
+```typescript title: convex/mgmt.ts
 export const inviteStaff = action({
   args: {
     orgId: v.id("organizations"),
@@ -177,8 +165,6 @@ export const inviteStaff = action({
 });
 ```
 
-</CodeBlockFrame>
-
 ### 4. Organization Metadata: The Crown Jewel
 
 The **ShipEngine API key** lives in Auth0 Organization Metadata (encrypted at rest), inaccessible to staff or client-side code.
@@ -202,9 +188,7 @@ The **ShipEngine API key** lives in Auth0 Organization Metadata (encrypted at re
 
 **Implementation**:
 
-<CodeBlockFrame title="convex/agents/shippingAgent.ts">
-
-```typescript
+```typescript title: convex/agents/shippingAgent.ts
 export const buyLabel = internalAction({
   args: { orderId: v.id("orders"), orgId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -229,8 +213,6 @@ export const buyLabel = internalAction({
 });
 ```
 
-</CodeBlockFrame>
-
 ---
 
 ## AI Agents: Six Solutions, One Platform
@@ -252,9 +234,7 @@ WhatThePack implements six AI-powered workflows using OpenAI (platform-provided)
 
 **Implementation**:
 
-<CodeBlockFrame title="convex/agents/ragAgent.ts">
-
-```typescript
+```typescript title: convex/agents/ragAgent.ts
 export const answerQuery = query({
   args: { prompt: v.string() },
   handler: async (ctx, args) => {
@@ -301,8 +281,6 @@ export const answerQuery = query({
 });
 ```
 
-</CodeBlockFrame>
-
 ### 3. Extraction Agent (Admin Assistant)
 
 - **Feature**: "Paste Chat to Auto-Fill" on order form
@@ -336,9 +314,7 @@ The packer's primary interface is **voice**, eliminating screen-switching ineffi
 
 ### VAPI Tools Definition
 
-<CodeBlockFrame title="convex/vapi.ts">
-
-```typescript
+```typescript title: convex/vapi.ts
 export const VAPI_TOOLS = {
   get_next_order: {
     description: "Get the next order to pack",
@@ -372,8 +348,6 @@ export const VAPI_TOOLS = {
 };
 ```
 
-</CodeBlockFrame>
-
 ### Typical Packer Workflow
 
 1. **Packer**: "Vapi, next order"
@@ -386,9 +360,7 @@ export const VAPI_TOOLS = {
 
 ### Webhook Security
 
-<CodeBlockFrame title="convex/http.ts">
-
-```typescript
+```typescript title: convex/http.ts
 http.route({
   path: "/vapi",
   method: "POST",
@@ -421,8 +393,6 @@ export const handleVapiWebhook = httpAction(async (ctx, request) => {
 });
 ```
 
-</CodeBlockFrame>
-
 ---
 
 ## Real-Time Architecture: Convex
@@ -431,9 +401,7 @@ All backend logic runs on **Convex** (serverless functions + real-time database)
 
 ### Database Schema Highlights
 
-<CodeBlockFrame title="convex/schema.ts">
-
-```typescript
+```typescript title: convex/schema.ts
 products: defineTable({
   orgId: v.id("organizations"),
   sku: v.string(),
@@ -489,15 +457,11 @@ movements: defineTable({
   .index("by_product", ["productId"]);
 ```
 
-</CodeBlockFrame>
-
 ### Query Pattern (Multi-Tenancy)
 
 Every query MUST filter by `orgId`:
 
-<CodeBlockFrame title="convex/orders.ts">
-
-```typescript
+```typescript title: convex/orders.ts
 export const list = query({
   args: {
     orgId: v.id("organizations"),
@@ -516,8 +480,6 @@ export const list = query({
 });
 ```
 
-</CodeBlockFrame>
-
 ### HTTP Routes
 
 - `POST /provision`: Auth0 post-registration webhook → Create organization
@@ -532,9 +494,7 @@ React 19 with strict role-based rendering:
 
 ### Dashboard Routing
 
-<CodeBlockFrame title="src/pages/Dashboard/index.tsx">
-
-```typescript
+```typescript title: src/pages/Dashboard/index.tsx
 export default function Dashboard() {
   const roles = useUserRoles();
   const role = roles[0];
@@ -546,8 +506,6 @@ export default function Dashboard() {
   return <AccessDenied />;
 }
 ```
-
-</CodeBlockFrame>
 
 ### Owner Dashboard
 

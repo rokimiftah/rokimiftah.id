@@ -7,8 +7,6 @@ demoURL: "https://sahin.biz.id"
 repoURL: "https://github.com/rokimiftah/SAH-in-Aja"
 ---
 
-import CodeBlockFrame from "@components/CodeBlockFrame.astro";
-
 ![](https://cdn.sahin.biz.id/landing.png)
 
 **SAH-in Aja!** is Indonesia's first AI-powered halal certification preparation platform built for the nation's 30+ million MSMEs. It provides **Vision AI assessment** of kitchen/production facilities, **smart document generation** for SJPH compliance, and a **guardrailed chatbot** for 24/7 halal certification guidance—running on a credit-based system that resets daily, optimized for low-end devices over 4G networks.
@@ -74,9 +72,7 @@ Upload up to **5 photos** of your kitchen, and Claude Sonnet 4.5 Vision analyzes
 
 ### Vision AI Workflow
 
-<CodeBlockFrame title="convex/analyzeHalal.ts">
-
-```typescript
+```typescript title: convex/analyzeHalal.ts
 export const analyzeKitchen = action({
   args: {
     photoStorageIds: v.array(v.id("_storage"))
@@ -121,15 +117,11 @@ export const analyzeKitchen = action({
 });
 ```
 
-</CodeBlockFrame>
-
 ### System Prompt Engineering
 
 The key is making AI speak like a friendly neighborhood auditor, not a bureaucrat:
 
-<CodeBlockFrame title="convex/lib/kolosal.ts">
-
-```typescript
+```typescript title: convex/lib/kolosal.ts
 export const SYSTEM_PROMPTS = {
   HALAL_ASSESSMENT: `Anda adalah auditor kehalalan berpengalaman untuk UMKM Indonesia...
 
@@ -147,8 +139,6 @@ PENTING:
 - Tetap gunakan bahasa yang sopan dan mendidik, tapi tegas dalam hal kepatuhan syariah`
 };
 ```
-
-</CodeBlockFrame>
 
 **Sample Output** (not a scary report, but a friendly nudge):
 
@@ -198,9 +188,7 @@ The system uses **two-stage prompt engineering**:
 1. **Template prompt** defining document structure
 2. **Dynamic data injection** from user input
 
-<CodeBlockFrame title="convex/generateDocument.ts">
-
-```typescript
+```typescript title: convex/generateDocument.ts
 const TEMPLATE_PROMPTS: Record<string, string> = {
   sop_produksi: `Buat SOP Produksi Halal yang mencakup:\n1. Tujuan...\n2. Prosedur Pemilihan...\n...`,
   perjanjian_supplier: `Buat Surat Perjanjian Supplier...\n1. Para Pihak...\n...`,
@@ -254,14 +242,10 @@ ${args.ingredients.map((i) => `- ${i.name} (Supplier: ${i.supplier}, Status: ${i
 });
 ```
 
-</CodeBlockFrame>
-
 **Why plain text, not markdown?**
 DOCX generation requires clean, structured text. The frontend uses `docx` npm library to convert plain text → formatted Word documents:
 
-<CodeBlockFrame title="src/features/dokumen-halal/hooks/useDocumentGenerator.ts">
-
-```typescript
+```typescript title: src/features/dokumen-halal/hooks/useDocumentGenerator.ts
 // Pseudo-code showing conversion logic
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
@@ -298,8 +282,6 @@ const generateDocx = (plainText: string, templateType: string) => {
 };
 ```
 
-</CodeBlockFrame>
-
 ---
 
 ## 3. Asisten Halal: Guardrailed Chatbot with LLM-Based Classification
@@ -308,9 +290,7 @@ This is where most chatbots fail: they either allow everything (risky) or block 
 
 ### Layer 1: Keyword Filtering (Fast Block)
 
-<CodeBlockFrame title="convex/consultHalal.ts">
-
-```typescript
+```typescript title: convex/consultHalal.ts
 const BLOCKED_KEYWORDS = [
   "bunuh",
   "racun",
@@ -340,8 +320,6 @@ function containsBlockedContent(message: string): boolean {
 }
 ```
 
-</CodeBlockFrame>
-
 ### Layer 2: Greeting Bypass
 
 Simple greetings don't need LLM classification (saves cost + latency):
@@ -359,9 +337,7 @@ function isGreeting(message: string): boolean {
 
 For complex queries, use **Claude Sonnet 4.5** to determine if question is halal-related:
 
-<CodeBlockFrame title="convex/consultHalal.ts">
-
-```typescript
+```typescript title: convex/consultHalal.ts
 async function classifyTopicWithLLM(message: string, kolosal: Client) {
   const classificationPrompt = `Kamu adalah classifier untuk aplikasi "Asisten Halal".
 
@@ -393,17 +369,13 @@ Pertanyaan: "${message}"`;
 }
 ```
 
-</CodeBlockFrame>
-
 **Why this is smart:** False positives (allowing non-halal questions) are better than false negatives (blocking legitimate users). This respects the platform's purpose while maximizing utility.
 
 ### Chat Context Integration
 
 The chatbot can reference user's scan history for personalized advice:
 
-<CodeBlockFrame title="convex/consultHalal.ts">
-
-```typescript
+```typescript title: convex/consultHalal.ts
 export const chat = action({
   args: {
     message: v.string(),
@@ -443,8 +415,6 @@ export const chat = action({
   }
 });
 ```
-
-</CodeBlockFrame>
 
 **Sample conversation**:
 
@@ -487,9 +457,7 @@ Each user gets daily credits (reset at 7 AM WIB / UTC+7). This balances:
 
 ### Database Schema
 
-<CodeBlockFrame title="convex/schema.ts">
-
-```typescript
+```typescript title: convex/schema.ts
 export default defineSchema({
   // ... auth tables
 
@@ -537,13 +505,9 @@ export default defineSchema({
 });
 ```
 
-</CodeBlockFrame>
-
 ### Credit Deduction Logic
 
-<CodeBlockFrame title="convex/credits.ts (simplified)">
-
-```typescript
+```typescript title: convex/credits.ts (simplified)
 export const deductCredit = internalMutation({
   args: {
     userId: v.id("users"),
@@ -592,8 +556,6 @@ export const deductCredit = internalMutation({
 });
 ```
 
-</CodeBlockFrame>
-
 ### Promo Code System
 
 Admin can generate promo codes via Convex dashboard. When user redeems:
@@ -632,7 +594,7 @@ Device: Samsung A03, Xiaomi Redmi 9A, Oppo A16
    - `<picture>` element for responsive images
    - Lazy loading + intersection observer
    - Convex Storage serves optimized images:
-     ```url
+     ```
      https://cloudflare-worker.convex.cloud/api/storage/...?format=auto&width=800
      ```
 
@@ -650,9 +612,7 @@ Device: Samsung A03, Xiaomi Redmi 9A, Oppo A16
 
 ### Routing with Wouter (2KB gzipped)
 
-<CodeBlockFrame title="src/app/App.tsx">
-
-```typescript
+```typescript title: src/app/App.tsx
 import { Router, Route, Switch } from 'wouter';
 
 export default function App() {
@@ -673,8 +633,6 @@ export default function App() {
   );
 }
 ```
-
-</CodeBlockFrame>
 
 ---
 
@@ -719,9 +677,7 @@ Indonesian UMKM data sovereignty is critical. Self-hosting ensures:
 
 ### Dockerfile
 
-<CodeBlockFrame title="Dockerfile">
-
-```dockerfile
+```dockerfile title: Dockerfile
 # Multi-stage build
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -754,13 +710,9 @@ EXPOSE 3210
 CMD ["convex", "dev", "--port", "3210", "--host", "0.0.0.0"]
 ```
 
-</CodeBlockFrame>
-
 ### Caddyfile
 
-<CodeBlockFrame title="Caddyfile">
-
-```caddy
+```plaintext title: Caddyfile
 sahin.biz.id {
   # Frontend (static assets)
   handle_path /* {
@@ -792,13 +744,9 @@ sahin.biz.id {
 }
 ```
 
-</CodeBlockFrame>
-
 ### GitHub Actions CI/CD
 
-<CodeBlockFrame title=".github/workflows/deploy.yml">
-
-```yaml
+```yaml title: .github/workflows/deploy.yml
 name: Deploy to VPS
 
 on:
@@ -832,8 +780,6 @@ steps: - uses: actions/checkout@v4
             docker-compose build --no-cache
             docker-compose up -d
 ```
-
-</CodeBlockFrame>
 
 ---
 

@@ -7,8 +7,6 @@ demoURL: "https://giw.rokimiftah.id"
 repoURL: "https://github.com/rokimiftah/github-issue-watcher"
 ---
 
-import CodeBlockFrame from "@components/CodeBlockFrame.astro";
-
 ![GitHub Issue Watcher Dashboard](https://cdn.rokimiftah.id/projects/github-issue-watcher/1.avif)
 
 **GitHub Issue Watcher** is an intelligent issue monitoring platform that tracks GitHub repositories for keyword-matched issues and uses OpenAI to analyze relevance with precision scoring. It features a task queue system, rate limiting, batch processing, and automated email notifications—keeping developers informed without noise.
@@ -102,9 +100,7 @@ GitHub Issue Watcher combines GitHub API automation with LLM analysis to deliver
 
 **Query structure**:
 
-<CodeBlockFrame title="graphql">
-
-```graphql
+```graphql title: graphql
 query ($owner: String!, $name: String!, $after: String) {
   repository(owner: $owner, name: $name) {
     issues(first: 100, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
@@ -129,13 +125,9 @@ query ($owner: String!, $name: String!, $after: String) {
 }
 ```
 
-</CodeBlockFrame>
-
 **Implementation** (simplified):
 
-<CodeBlockFrame title="convex/githubActions.ts">
-
-```typescript
+```typescript title: convex/githubActions.ts
 export const fetchAllIssues = action({
   args: { repoUrl: v.string(), keyword: v.string() },
   handler: async (ctx, args) => {
@@ -164,8 +156,6 @@ export const fetchAllIssues = action({
 });
 ```
 
-</CodeBlockFrame>
-
 **Batch processing**: Fetches 100 issues per request, processes in batches of 1000 for memory efficiency.
 
 ### 2. AI Relevance Analysis (OpenAI)
@@ -174,9 +164,7 @@ Each issue is analyzed by GPT-4o-mini to determine true relevance:
 
 **Prompt engineering**:
 
-<CodeBlockFrame title="">
-
-```typescript
+```typescript title:
 const systemPrompt = `
 You are a GitHub issue relevance analyzer. Given a keyword and an issue, determine:
 
@@ -215,15 +203,11 @@ Analyze relevance.
 `;
 ```
 
-</CodeBlockFrame>
-
 **Non-multiple-of-5 enforcement**: Scores are adjusted ±1 if divisible by 5 (prevents LLM bias toward round numbers like 50, 75, 80).
 
 **Retry logic with exponential backoff**:
 
-<CodeBlockFrame title="convex/llmAnalysis.ts">
-
-```typescript
+```typescript title: convex/llmAnalysis.ts
 async function safeAnalyzeIssue(openai, prompt, model, issue) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -249,8 +233,6 @@ async function safeAnalyzeIssue(openai, prompt, model, issue) {
 }
 ```
 
-</CodeBlockFrame>
-
 **Response parsing**: Handles multiple formats (clean JSON, fenced code blocks, inline JSON strings).
 
 ### 3. Task Queue System with Distributed Workers
@@ -272,9 +254,7 @@ Workers process concurrently → Store results → Send email
 
 **Worker implementation**:
 
-<CodeBlockFrame title="convex/llmWorker.ts">
-
-```typescript
+```typescript title: convex/llmWorker.ts
 export const processWorkBatch = internalAction({
   args: { batchSize: v.number() },
   handler: async (ctx, args) => {
@@ -314,17 +294,11 @@ export const processWorkBatch = internalAction({
 });
 ```
 
-</CodeBlockFrame>
-
 **Cron job**: Runs every 5 minutes to process pending tasks.
 
-<CodeBlockFrame title="convex/crons.ts">
-
-```typescript
+```typescript title: convex/crons.ts
 crons.interval("process llm tasks", { minutes: 5 }, internal.llmWorker.processWorkBatch, { batchSize: 10 });
 ```
-
-</CodeBlockFrame>
 
 ### 4. Rate Limiting (Token + Request Tracking)
 
@@ -336,9 +310,7 @@ crons.interval("process llm tasks", { minutes: 5 }, internal.llmWorker.processWo
 
 **Implementation**:
 
-<CodeBlockFrame title="convex/rateLimiter.ts">
-
-```typescript
+```typescript title: convex/rateLimiter.ts
 export const checkRateLimit = mutation({
   args: {
     userId: v.id("users"),
@@ -399,8 +371,6 @@ export const checkRateLimit = mutation({
 });
 ```
 
-</CodeBlockFrame>
-
 **Token estimation**: `title.length + body.length + 500` (rough heuristic).
 
 ### 5. Progressive Email Notifications (Resend)
@@ -415,9 +385,7 @@ export const checkRateLimit = mutation({
 
 **Template** (React Email):
 
-<CodeBlockFrame title="src/components/dashboard/template/IssueReportEmail.tsx">
-
-```tsx
+```tsx title: src/components/dashboard/template/IssueReportEmail.tsx
 export function IssueReportEmail({
   repoUrl,
   keyword,
@@ -478,13 +446,9 @@ export function IssueReportEmail({
 }
 ```
 
-</CodeBlockFrame>
-
 **Sending logic**:
 
-<CodeBlockFrame title="convex/githubIssues.ts">
-
-```typescript
+```typescript title: convex/githubIssues.ts
 export const sendProgressiveEmail = mutation({
   args: {
     reportId: v.id("reports"),
@@ -511,8 +475,6 @@ export const sendProgressiveEmail = mutation({
 });
 ```
 
-</CodeBlockFrame>
-
 ---
 
 ## Database Schema
@@ -521,9 +483,7 @@ export const sendProgressiveEmail = mutation({
 
 **reports**: Stores completed analysis results
 
-<CodeBlockFrame title="">
-
-```typescript
+```typescript title:
 reports: defineTable({
   repoUrl: v.string(), // e.g., "https://github.com/facebook/react"
   keyword: v.string(), // Search term
@@ -556,13 +516,9 @@ reports: defineTable({
   .index("repoUrl_keyword", ["repoUrl", "keyword"]);
 ```
 
-</CodeBlockFrame>
-
 **analysis_tasks**: Task queue for LLM workers
 
-<CodeBlockFrame title="">
-
-```typescript
+```typescript title:
 analysis_tasks: defineTable({
   reportId: v.id("reports"),
   ownerUserId: v.id("users"),
@@ -588,13 +544,9 @@ analysis_tasks: defineTable({
   .index("owner_status", ["ownerUserId", "status"]);
 ```
 
-</CodeBlockFrame>
-
 **rate_limits**: Per-user rate tracking
 
-<CodeBlockFrame title="">
-
-```typescript
+```typescript title:
 rate_limits: defineTable({
   bucket: v.string(), // "user:userId"
   requests: v.number(),
@@ -603,21 +555,15 @@ rate_limits: defineTable({
 }).index("bucket", ["bucket"]);
 ```
 
-</CodeBlockFrame>
-
 **locks**: Distributed locks for workers
 
-<CodeBlockFrame title="">
-
-```typescript
+```typescript title:
 locks: defineTable({
   name: v.string(), // Lock identifier
   leaseExpiresAt: v.number(), // Expiry timestamp
   owner: v.optional(v.string()) // Worker ID
 }).index("name", ["name"]);
 ```
-
-</CodeBlockFrame>
 
 ---
 
@@ -636,9 +582,7 @@ locks: defineTable({
 
 1. **IssueFormModal**:
 
-<CodeBlockFrame title="">
-
-```tsx
+```tsx title:
 function IssueFormModal({ onReportGenerated }) {
   const [repoUrl, setRepoUrl] = useState("");
   const [keyword, setKeyword] = useState("");
@@ -659,13 +603,9 @@ function IssueFormModal({ onReportGenerated }) {
 }
 ```
 
-</CodeBlockFrame>
-
 2. **ReportsList**:
 
-<CodeBlockFrame title="">
-
-```tsx
+```tsx title:
 function ReportsList({ reportId, setReportId }) {
   const reports = useQuery(api.githubIssues.listReports);
 
@@ -684,13 +624,9 @@ function ReportsList({ reportId, setReportId }) {
 }
 ```
 
-</CodeBlockFrame>
-
 3. **IssuesTable**:
 
-<CodeBlockFrame title="">
-
-```tsx
+```tsx title:
 function IssuesTable({ reportId }) {
   const report = useQuery(api.githubIssues.getReport, { reportId });
   const [sortedIssues, setSortedIssues] = useState([]);
@@ -739,8 +675,6 @@ function IssuesTable({ reportId }) {
   );
 }
 ```
-
-</CodeBlockFrame>
 
 **Real-time updates**: Convex queries auto-refresh when data changes (no polling needed).
 

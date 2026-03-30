@@ -4,6 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
+import { remarkCodeblockFrame } from "./src/lib/remark-codeblock-frame";
 
 export default defineConfig({
   devToolbar: {
@@ -18,6 +19,8 @@ export default defineConfig({
   ],
 
   markdown: {
+    remarkPlugins: [remarkCodeblockFrame],
+
     shikiConfig: {
       theme: "dark-plus",
       wrap: false

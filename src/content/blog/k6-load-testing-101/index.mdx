@@ -5,7 +5,6 @@ date: "July 01 2025"
 draft: false
 ---
 
-import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 import TLDR from "@components/TLDR.astro";
 
 In our digital landscape, seamless user experiences reign supreme. A sluggish or unresponsive app erodes customer satisfaction swiftly. Integrating k6 load testing into your development cycle helps proactively identify and rectify performance bottlenecks, ensuring your system handles real-world demands without compromising functionality or usability.
@@ -39,21 +38,13 @@ The first crucial move is making sure your [web app](https://rokimiftah.id) is p
 
 Make sure we have installed k6 and Node.js properly by using command:
 
-<CodeBlockFrame title="sh">
-
-```
+```sh title: sh
 sh k6 --version
 ```
 
-</CodeBlockFrame>
-
-<CodeBlockFrame title="sh">
-
-```sh
+```sh title: sh
 node --version
 ```
-
-</CodeBlockFrame>
 
 ### Step 3: Writing Your First k6 Test Script
 
@@ -68,62 +59,41 @@ Before you start scripting, let's set up a dedicated project folder and initiali
 
 1. Create a new folder for your k6 project:
 
-<CodeBlockFrame title="sh">
-
-```sh
+```sh title: sh
 mkdir k6-load-tests && cd k6-load-tests
 ```
 
-</CodeBlockFrame>
-
 2. Initialize a new Node.js project:
 
-<CodeBlockFrame title="sh">
-
-```sh
+```sh title: sh
 npm init -y
 ```
 
-</CodeBlockFrame>
-
 3. Open the `package.json` file and change the `"type"` field to `"module"`:
 
-<CodeBlockFrame title="package.json">
-
-```json
+```json title: package.json
 {
   "type": "module"
 }
 ```
 
-</CodeBlockFrame>
-
 4. Install the required k6 packages:
 
-<CodeBlockFrame title="sh">
-
-```sh
+```sh title: sh
 npm install k6 && npm install -D @types/k6
 ```
 
-</CodeBlockFrame>
-
 5. Then create 4 files:
 
-<CodeBlockFrame title="sh">
-
-```sh
+```sh title: sh
 touch minimal-test.js stress-test.js spike-test.js soak-test.js
 ```
 
-</CodeBlockFrame>
-
 Having formulated your comprehensive testing approach, the next phase entails transcribing your strategy into executable scripts. The k6 tool leverages JavaScript (or its superset, TypeScript) as the programming language for crafting test scripts, thereby offering accessibility to developers well-versed in these widely adopted languages. To illustrate, let us consider an exemplary script that emulates a straightforward user interaction scenario on my website:
 
-<CodeBlockFrame title="minimal-test.js">
-```js
-import http from 'k6/http';
-import { sleep } from 'k6';
+```js title: minimal-test.js
+import http from "k6/http";
+import { sleep } from "k6";
 
 export const options = {
   vus: 10, // 10 virtual users
@@ -131,16 +101,14 @@ export const options = {
 };
 
 export default function () {
-  http.get('https://rokimiftah.id');
+  http.get("https://rokimiftah.id");
   sleep(1);
 }
 ```
-</CodeBlockFrame>
 
-<CodeBlockFrame title="stress-test.js">
-```js
-import http from 'k6/http';
-import { sleep } from 'k6';
+```js title: stress-test.js
+import http from "k6/http";
+import { sleep } from "k6";
 
 export const options = {
   stages: [
@@ -153,16 +121,14 @@ export const options = {
 };
 
 export default function () {
-  http.get('https://rokimiftah.id');
+  http.get("https://rokimiftah.id");
   sleep(1);
 }
 ```
-</CodeBlockFrame>
 
-<CodeBlockFrame title="spike-test.js">
-```js
-import http from 'k6/http';
-import { sleep } from 'k6';
+```js title: spike-test.js
+import http from "k6/http";
+import { sleep } from "k6";
 
 export const options = {
   stages: [
@@ -173,16 +139,14 @@ export const options = {
 };
 
 export default function () {
-  http.get('https://rokimiftah.id');
+  http.get("https://rokimiftah.id");
   sleep(1);
 }
 ```
-</CodeBlockFrame>
 
-<CodeBlockFrame title="soak-test.js">
-```js
-import http from 'k6/http';
-import { sleep } from 'k6';
+```js title: soak-test.js
+import http from "k6/http";
+import { sleep } from "k6";
 
 export const options = {
   stages: [
@@ -193,11 +157,10 @@ export const options = {
 };
 
 export default function () {
-  http.get('https://rokimiftah.id');
+  http.get("https://rokimiftah.id");
   sleep(1);
 }
 ```
-</CodeBlockFrame>
 
 <br />
 
@@ -250,13 +213,9 @@ Once you have crafted your k6 test scripts, the next crucial phase involves exec
    - Run k6 using the command `k6 run [script_file_name]`.
    - Throughout the duration of the test run, k6 will continuously present real-time data and metrics, including the count of simulated virtual users, the rate at which requests are being processed, the observed response durations, and any other pertinent statistical information relevant to the test scenario.
 
-<CodeBlockFrame title="sh">
-
-```sh
+```sh title: sh
 k6 run minimal-test.js
 ```
-
-</CodeBlockFrame>
 
 2. Test Results
    - Once the test run has concluded, k6 will present a comprehensive summary encapsulating the test results, encompassing pivotal performance indicators. This synopsis will incorporate critical metrics such as the rate at which requests were processed, the observed response durations, the frequency of errors or failures encountered, and any other pertinent statistical data relevant to evaluating the system's performance under the simulated load conditions
@@ -266,7 +225,9 @@ k6 run minimal-test.js
 4. Result Output
    - In addition to the real-time display, k6 offers the capability to persist the test results in formats conducive to human comprehension, such as JSON or CSV. This feature facilitates further analysis and visualization of the data obtained during the test execution. To leverage this functionality, you can invoke the `k6 run` command with an additional flag, specifying the desired output format and file name. The command syntax would resemble: `k6 run [script_file_name] --out [output_format]=[output_file_name].[output_extension]`.
 
-<CodeBlockFrame title="sh">```sh k6 run minimal-test.js --out json=minimal-test.json ```</CodeBlockFrame>
+```sh title: sh
+k6 run minimal-test.js --out json=minimal-test.json
+```
 
 5. Result Analysis
    - Stability and Reliability: The application successfully handled a consistent load of 10 concurrent virtual users (VUs) over a 30-second period without any failures. This is evidenced by the 0% failure rate (http_req_failed: 0.00%) and the stable VU count throughout the test.
