@@ -11,20 +11,24 @@ import TLDR from "@components/TLDR.astro";
 In our digital landscape, seamless user experiences reign supreme. A sluggish or unresponsive app erodes customer satisfaction swiftly. Integrating k6 load testing into your development cycle helps proactively identify and rectify performance bottlenecks, ensuring your system handles real-world demands without compromising functionality or usability.
 
 ### Step 1: Understanding Load Testing and k6
+
 Load testing simulates multiple concurrent users accessing your system to gauge its performance under real-world conditions. It focuses on verifying and validating an application's performance when it has a significant volume of tasks to process. A straightforward comparison can help grasp load testing - picture throwing a party at your place to evaluate if it can handle a large crowd comfortably, without running short on food, beverages or restroom access.
 
 <TLDR>
-However, load testing isn't synonymous with performance testing; it's a focused methodology under the performance testing umbrella.
+  However, load testing isn't synonymous with performance testing; it's a focused methodology under the performance testing
+  umbrella.
 </TLDR>
 
 Enter k6 - an open-source load testing tool gaining traction among developers. It offers a user-friendly scripting interface to craft custom test cases mimicking authentic user journeys. With k6's scripting prowess, simulate scenarios like multiple users browsing your e-commerce site, adding products, and completing purchases simultaneously. This insight optimizes system performance under high traffic.
 
 k6 offers a diverse range of load testing methodologies to cater to various scenarios. These methodologies include but not limited to:
+
 - Stress Testing: These simulations push the application to its limits by replicating the highest anticipated traffic volumes during peak periods, such as the busiest times of the day or seasonal surges. In contrast to average load tests that simulate typical traffic patterns averaged over a week, a month, or longer, stress tests focus on the maximum load the application may encounter.
 - Spike Testing: These tests recreate situations where the application experiences a sudden, massive surge in traffic, allowing you to evaluate how the application responds to such bursts.
 - Endurance Testing (Soak Testing): With longer durations than average or peak tests, endurance testing evaluates the application's performance under sustained loads over extended periods. This approach helps identify potential bottlenecks, such as resource management issues, that may only manifest after prolonged usage. By leveraging k6's versatile load testing capabilities, you can comprehensively analyze your application's performance tailored to your specific needs, ensuring seamless user experiences even under demanding conditions.
 
 ### Step 2: Setting Up the k6 Environment
+
 Configuring k6 is seriously easy-peasy. Just follow some basic steps, kind of like making a sandwich, and you'll be cruising and ready to smash through any load testing hurdles.
 
 The first crucial move is making sure your [web app](https://rokimiftah.id) is prepped and ready to get tested on. The next step is to install k6 and Node.js depends on the operating system you are using.
@@ -36,18 +40,23 @@ The first crucial move is making sure your [web app](https://rokimiftah.id) is p
 Make sure we have installed k6 and Node.js properly by using command:
 
 <CodeBlockFrame title="sh">
-```sh
-k6 --version
+
 ```
+sh k6 --version
+```
+
 </CodeBlockFrame>
 
 <CodeBlockFrame title="sh">
+
 ```sh
 node --version
 ```
+
 </CodeBlockFrame>
 
 ### Step 3: Writing Your First k6 Test Script
+
 Creating a solid plan is vital before diving into your first k6 load testing script. Proper planning makes the tests productive, streamlined, and aligned with your app's performance targets. Consider these key points:
 
 1. Clarify Testing Goals and Critical Scenarios:
@@ -58,40 +67,55 @@ Creating a solid plan is vital before diving into your first k6 load testing scr
 Before you start scripting, let's set up a dedicated project folder and initialize a new Node.js project. Open your terminal and navigate to the desired location, then follow these steps:
 
 1. Create a new folder for your k6 project:
+
 <CodeBlockFrame title="sh">
+
 ```sh
 mkdir k6-load-tests && cd k6-load-tests
 ```
+
 </CodeBlockFrame>
 
 2. Initialize a new Node.js project:
+
 <CodeBlockFrame title="sh">
+
 ```sh
 npm init -y
 ```
+
 </CodeBlockFrame>
 
 3. Open the `package.json` file and change the `"type"` field to `"module"`:
+
 <CodeBlockFrame title="package.json">
+
 ```json
 {
   "type": "module"
 }
 ```
+
 </CodeBlockFrame>
 
 4. Install the required k6 packages:
+
 <CodeBlockFrame title="sh">
+
 ```sh
 npm install k6 && npm install -D @types/k6
 ```
+
 </CodeBlockFrame>
 
 5. Then create 4 files:
+
 <CodeBlockFrame title="sh">
+
 ```sh
 touch minimal-test.js stress-test.js spike-test.js soak-test.js
 ```
+
 </CodeBlockFrame>
 
 Having formulated your comprehensive testing approach, the next phase entails transcribing your strategy into executable scripts. The k6 tool leverages JavaScript (or its superset, TypeScript) as the programming language for crafting test scripts, thereby offering accessibility to developers well-versed in these widely adopted languages. To illustrate, let us consider an exemplary script that emulates a straightforward user interaction scenario on my website:
@@ -186,6 +210,7 @@ comprehension.
 import http from "k6/http";
 import { sleep } from "k6";
 ```
+
 To begin, we take the `http` component from `k6/http` and the `sleep` function from `k6`. Meanwhile, the `sleep` function replicates the pause a user takes when not actively making requests, such as when reading page material or moving between different pages.
 
 <br />
@@ -193,6 +218,7 @@ To begin, we take the `http` component from `k6/http` and the `sleep` function f
 ```js
 export const options = {...};
 ```
+
 Next up, we define the parameters for the load testing scenario within the `options` object. The `vus` (short for virtual users) setting dictates how many simulated users will be involved, whereas the `duration` setting controls how long the test will run. We use the stages setting to control the number of simulated users that increase and decrease during the test execution for the stress-test.js, spike-test.js, and soak-test.js scenarios.
 
 Options reference: [https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/)
@@ -205,6 +231,7 @@ export default function () {
   sleep(1);
 }
 ```
+
 The `export default function () { ... }` function serves as the entry point for the test scenario. This function will be executed once for each virtual user. Inside this function, we call `http.get()` to make an HTTP GET request to the specified URL. In our example, we access the `https://rokimiftah.id` URL.
 
 After the HTTP request, we invoke `sleep(1)` to simulate a 1-second think time. This represents the period when an actual user might be reading the page content or performing other actions before proceeding to the next step in the user flow.
@@ -216,6 +243,7 @@ By understanding each part of these scripts, we can observe how k6 assists us in
 These scripts are just basic examples, and we can further expand them by adding additional HTTP requests, authentication, form submissions, and other relevant user actions specific to our application.
 
 ### Step 4: Executing and Analyzing k6 Test Results
+
 Once you have crafted your k6 test scripts, the next crucial phase involves executing them and meticulously analyzing the test results. Here are the essential aspects to consider when running and interpreting your k6 load tests:
 
 1. Running k6 Tests
@@ -223,9 +251,11 @@ Once you have crafted your k6 test scripts, the next crucial phase involves exec
    - Throughout the duration of the test run, k6 will continuously present real-time data and metrics, including the count of simulated virtual users, the rate at which requests are being processed, the observed response durations, and any other pertinent statistical information relevant to the test scenario.
 
 <CodeBlockFrame title="sh">
+
 ```sh
 k6 run minimal-test.js
 ```
+
 </CodeBlockFrame>
 
 2. Test Results
@@ -236,11 +266,7 @@ k6 run minimal-test.js
 4. Result Output
    - In addition to the real-time display, k6 offers the capability to persist the test results in formats conducive to human comprehension, such as JSON or CSV. This feature facilitates further analysis and visualization of the data obtained during the test execution. To leverage this functionality, you can invoke the `k6 run` command with an additional flag, specifying the desired output format and file name. The command syntax would resemble: `k6 run [script_file_name] --out [output_format]=[output_file_name].[output_extension]`.
 
-<CodeBlockFrame title="sh">
-```sh
-k6 run minimal-test.js --out json=minimal-test.json
-```
-</CodeBlockFrame>
+<CodeBlockFrame title="sh">```sh k6 run minimal-test.js --out json=minimal-test.json ```</CodeBlockFrame>
 
 5. Result Analysis
    - Stability and Reliability: The application successfully handled a consistent load of 10 concurrent virtual users (VUs) over a 30-second period without any failures. This is evidenced by the 0% failure rate (http_req_failed: 0.00%) and the stable VU count throughout the test.

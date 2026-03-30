@@ -14,6 +14,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 **WhatThePack.today** is an AI-powered "Mission Control" for D2C sellers. It lets owners delegate logistics (orders, inventory, packing) securely with multi-tenancy, strict RBAC, agentic automation, and a voice interface for packers—without exposing sensitive API keys.
 
 ### Why it matters
+
 - **Secure delegation**: ShipEngine API keys live in Auth0 Organization Metadata and are accessed only by server-side agents (Convex Actions) via Auth0 M2M—never by staff or the client.
 - **Hands-free packing**: VAPI.ai triggers Convex workflows to get the next order, complete packing, and purchase labels.
 - **Role-aware intelligence**: RAG filters data by role and organization before it reaches the LLM (OpenAI), preventing leakage.
@@ -21,12 +22,14 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 - **Proactive notifications**: Resend emails for critical events (e.g., stockout, order failure).
 
 ### How it works (brief)
+
 1. **Owner signs up**: An Auth0 Organization is created. Owner saves the ShipEngine key in Organization Metadata.
 2. **Owner invites staff**: (admin/packer) via Auth0 Management API; roles are assigned; MFA is enforced for owner.
 3. **Packer uses VAPI.ai**: Convex Actions retrieve the ShipEngine key securely, buy labels via ShipEngine, and update orders/stock.
 4. **RAG + OpenAI**: Provide role-scoped answers and daily briefings.
 
 ### Stack
+
 - **Frontend**: React 19 + TypeScript
 - **Backend**: Convex (serverless, real-time, HTTP routes)
 - **Auth**: Auth0 (Organizations, Roles, Actions, MFA, Org Metadata, M2M)
@@ -40,6 +43,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 ## The Problem: Delegation Nightmare
 
 D2C sellers avoiding marketplaces (Instagram, WhatsApp commerce) face a critical challenge: **operational chaos when scaling**. To hire staff, owners must share:
+
 - Online banking credentials (to verify payments)
 - Courier API keys (to purchase shipping labels)
 - Financial data (COGS, profit margins)
@@ -49,6 +53,7 @@ This creates a **security nightmare**—staff can see everything, including sens
 ### The Real Bottleneck
 
 The problem isn't customer chat (that requires the human touch). The bottleneck is **what happens after the sale**:
+
 - Manual data entry from chat logs to order forms
 - Verifying bank transfers
 - Looking up shipping rates
@@ -65,11 +70,13 @@ Most logistics platforms solve the wrong problem or force businesses into market
 WhatThePack solves the delegation nightmare by implementing a **zero-trust, role-aware architecture** powered by Auth0's full suite:
 
 ### 1. Multi-Tenancy via Auth0 Organizations
+
 Each business gets an isolated Auth0 Organization with its own subdomain (`store-name.whatthepack.today`). All database queries filter by `orgId` with strict indexes to prevent cross-tenant data leakage.
 
 **Schema enforcement**:
+
 <CodeBlockFrame title="convex/schema.ts">
-</CodeBlockFrame>
+
 ```typescript
 organizations: defineTable({
   name: v.string(),
@@ -85,21 +92,26 @@ organizations: defineTable({
 .index("by_auth0OrgId", ["auth0OrgId"])
 ```
 
+</CodeBlockFrame>
+
 ### 2. Granular RBAC: owner, admin, packer
+
 Three roles with distinct permissions and UI surfaces:
 
-| Feature | owner (Strategist) | admin (Operator) | packer (Executor) |
-|---------|-------------------|------------------|-------------------|
-| **View financials** | ✅ Full access (COGS, profit, margins) | ❌ No access | ❌ No access |
-| **Staff management** | ✅ Invite/remove staff via Auth0 M2M | ❌ No access | ❌ No access |
-| **API integration** | ✅ Store ShipEngine key in Org Metadata | ❌ No access | ❌ No access |
-| **Order management** | ✅ Full CRUD | ✅ Create/view (with LLM auto-fill) | ❌ View paid queue only |
-| **Inventory** | ✅ Upload catalog, set COGS/prices | ❌ View stock levels | ❌ View location/SOP only |
-| **VAPI access** | ✅ Daily briefing (read-only) | ❌ No voice access | ✅ Packing workflow (action mode) |
-| **Analytics** | ✅ Full business metrics | ❌ No access | ❌ No access |
+| Feature              | owner (Strategist)                      | admin (Operator)                    | packer (Executor)                 |
+| -------------------- | --------------------------------------- | ----------------------------------- | --------------------------------- |
+| **View financials**  | ✅ Full access (COGS, profit, margins)  | ❌ No access                        | ❌ No access                      |
+| **Staff management** | ✅ Invite/remove staff via Auth0 M2M    | ❌ No access                        | ❌ No access                      |
+| **API integration**  | ✅ Store ShipEngine key in Org Metadata | ❌ No access                        | ❌ No access                      |
+| **Order management** | ✅ Full CRUD                            | ✅ Create/view (with LLM auto-fill) | ❌ View paid queue only           |
+| **Inventory**        | ✅ Upload catalog, set COGS/prices      | ❌ View stock levels                | ❌ View location/SOP only         |
+| **VAPI access**      | ✅ Daily briefing (read-only)           | ❌ No voice access                  | ✅ Packing workflow (action mode) |
+| **Analytics**        | ✅ Full business metrics                | ❌ No access                        | ❌ No access                      |
 
 **Server-side enforcement**:
+
 <CodeBlockFrame title="convex/auth.ts">
+
 ```typescript
 export async function requireRole(
   ctx: QueryCtx | MutationCtx,
@@ -109,15 +121,16 @@ export async function requireRole(
   const roles = await getUserRoles(ctx);
   const userOrgId = await getUserOrgId(ctx);
 
-  if (userOrgId !== orgId) {
-    throw new Error("Access denied: Wrong organization");
-  }
+if (userOrgId !== orgId) {
+throw new Error("Access denied: Wrong organization");
+}
 
-  if (!roles.some(r => allowedRoles.includes(r))) {
-    throw new Error(`Access denied: Requires role ${allowedRoles.join(" or ")}`);
-  }
+if (!roles.some(r => allowedRoles.includes(r))) {
+throw new Error(`Access denied: Requires role ${allowedRoles.join(" or ")}`);
+}
 }
 ```
+
 </CodeBlockFrame>
 
 ### 3. Secure Staff Onboarding (Auth0 Management API)
@@ -132,7 +145,9 @@ Owner invites staff via email without ever knowing their passwords:
 6. Staff logs in with `username_role` (e.g., `lisa_admin`)
 
 **Implementation**:
+
 <CodeBlockFrame title="convex/mgmt.ts">
+
 ```typescript
 export const inviteStaff = action({
   args: {
@@ -160,17 +175,21 @@ export const inviteStaff = action({
   }
 });
 ```
+
 </CodeBlockFrame>
 
 ### 4. Organization Metadata: The Crown Jewel
+
 The **ShipEngine API key** lives in Auth0 Organization Metadata (encrypted at rest), inaccessible to staff or client-side code.
 
 **Storage flow**:
+
 1. Owner goes to Integrations page (MFA enforced)
 2. Enters ShipEngine API key
 3. Convex Action stores in Auth0 Org Metadata via M2M
 
 **Retrieval flow** (zero-trust delegation):
+
 1. Packer says "Vapi, finished packing, weight 300g"
 2. VAPI webhook → Convex HTTP route
 3. Convex validates VAPI signature + packer role
@@ -181,7 +200,9 @@ The **ShipEngine API key** lives in Auth0 Organization Metadata (encrypted at re
 8. Packer never sees the API key
 
 **Implementation**:
+
 <CodeBlockFrame title="convex/agents/shippingAgent.ts">
+
 ```typescript
 export const buyLabel = internalAction({
   args: { orderId: v.id("orders"), orgId: v.id("organizations") },
@@ -203,9 +224,11 @@ export const buyLabel = internalAction({
       labelUrl: label.label_download.pdf,
       shippingCost: label.shipment_cost.amount,
     });
-  }
+
+}
 });
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -226,7 +249,9 @@ WhatThePack implements six AI-powered workflows using OpenAI (platform-provided)
 - **Admin prompt**: "How many orders pending?" → Returns count (no COGS data)
 
 **Implementation**:
+
 <CodeBlockFrame title="convex/agents/ragAgent.ts">
+
 ```typescript
 export const answerQuery = query({
   args: { prompt: v.string() },
@@ -273,25 +298,30 @@ export const answerQuery = query({
   }
 });
 ```
+
 </CodeBlockFrame>
 
 ### 3. Extraction Agent (Admin Assistant)
+
 - **Feature**: "Paste Chat to Auto-Fill" on order form
 - **Flow**: Admin pastes raw customer chat → LLM extracts (name, address, items, quantity) → Pre-fills form
 - **Tech**: OpenAI structured output with Zod schema validation
 
 ### 4. Briefing Agent (Owner Daily Summary)
+
 - **Trigger**: Owner opens dashboard or asks via VAPI
 - **Output**: "Good morning. 15 new orders, estimated profit $145. 'Black T-Shirt' stock is low (5 left)."
 - **Data**: Aggregates overnight orders, calculates profit, flags low stock
 
 ### 5. Notification Agent (Proactive Alerts)
+
 - **Triggers**: Packer reports stockout via VAPI, order processing fails
 - **Flow**: Agent detects event → Sends Resend email to owner + admin
 - **From**: `notifications@whatthepack.today`
 - **Rate limit**: Max 5 emails/org/hour
 
 ### 6. Analyst Agent (Business Intelligence)
+
 - **Feature**: Owner asks "Show me sales trends this month"
 - **Flow**: Aggregates order data → Generates insights + recommendations
 - **Output**: Charts + natural language summary
@@ -303,7 +333,9 @@ export const answerQuery = query({
 The packer's primary interface is **voice**, eliminating screen-switching inefficiency:
 
 ### VAPI Tools Definition
+
 <CodeBlockFrame title="convex/vapi.ts">
+
 ```typescript
 export const VAPI_TOOLS = {
   get_next_order: {
@@ -333,9 +365,11 @@ export const VAPI_TOOLS = {
   get_packing_instructions: { /* ... */ }
 };
 ```
+
 </CodeBlockFrame>
 
 ### Typical Packer Workflow
+
 1. **Packer**: "Vapi, next order"
 2. **VAPI**: Calls `get_next_order` tool → Convex webhook → Returns order #125
 3. **VAPI**: "Order 125 for John Doe. 1x Red Shirt SKU123, bin A5. Special note: gift wrap."
@@ -345,7 +379,9 @@ export const VAPI_TOOLS = {
 7. **Packer**: "Next order"
 
 ### Webhook Security
+
 <CodeBlockFrame title="convex/http.ts">
+
 ```typescript
 http.route({
   path: "/vapi",
@@ -355,29 +391,30 @@ http.route({
 
 // convex/vapi_node.ts
 export const handleVapiWebhook = httpAction(async (ctx, request) => {
-  // Verify VAPI signature
-  const signature = request.headers.get("x-vapi-signature");
-  if (!verifyVapiSignature(signature, body)) {
-    return new Response("Invalid signature", { status: 401 });
-  }
+// Verify VAPI signature
+const signature = request.headers.get("x-vapi-signature");
+if (!verifyVapiSignature(signature, body)) {
+return new Response("Invalid signature", { status: 401 });
+}
 
-  // Extract intent and payload
-  const { intent, orgId, payload } = await request.json();
+// Extract intent and payload
+const { intent, orgId, payload } = await request.json();
 
-  // Enforce RBAC
-  await requireRole(ctx, orgId, ["packer"]);
+// Enforce RBAC
+await requireRole(ctx, orgId, ["packer"]);
 
-  // Route to appropriate agent
-  switch (intent) {
-    case "get_next_order":
-      return await getNextOrderForPacking(ctx, orgId);
-    case "complete_order":
-      return await completeOrder(ctx, orgId, payload);
-    case "report_stockout":
-      return await reportStockout(ctx, orgId, payload);
-  }
+// Route to appropriate agent
+switch (intent) {
+case "get_next_order":
+return await getNextOrderForPacking(ctx, orgId);
+case "complete_order":
+return await completeOrder(ctx, orgId, payload);
+case "report_stockout":
+return await reportStockout(ctx, orgId, payload);
+}
 });
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -387,7 +424,9 @@ export const handleVapiWebhook = httpAction(async (ctx, request) => {
 All backend logic runs on **Convex** (serverless functions + real-time database):
 
 ### Database Schema Highlights
+
 <CodeBlockFrame title="convex/schema.ts">
+
 ```typescript
 products: defineTable({
   orgId: v.id("organizations"),
@@ -440,11 +479,15 @@ movements: defineTable({ // Audit trail
 .index("by_orgId", ["orgId"])
 .index("by_product", ["productId"])
 ```
+
 </CodeBlockFrame>
 
 ### Query Pattern (Multi-Tenancy)
+
 Every query MUST filter by `orgId`:
+
 <CodeBlockFrame title="convex/orders.ts">
+
 ```typescript
 export const list = query({
   args: {
@@ -462,9 +505,11 @@ export const list = query({
       )
       .order("desc")
       .collect();
-  }
+
+}
 });
 ```
+
 </CodeBlockFrame>
 
 ### HTTP Routes
@@ -479,7 +524,9 @@ export const list = query({
 React 19 with strict role-based rendering:
 
 ### Dashboard Routing
+
 <CodeBlockFrame title="src/pages/Dashboard/index.tsx">
+
 ```typescript
 export default function Dashboard() {
   const roles = useUserRoles();
@@ -492,9 +539,11 @@ export default function Dashboard() {
   return <AccessDenied />;
 }
 ```
+
 </CodeBlockFrame>
 
 ### Owner Dashboard
+
 - **KPI Cards**: Total orders, revenue, profit, avg order value
 - **Sales Trend Chart**: Recharts line graph (last 30 days)
 - **Product Performance**: Top 5 SKUs by profit
@@ -503,12 +552,14 @@ export default function Dashboard() {
 - **Staff Performance**: Orders/day per packer
 
 ### Admin Dashboard
+
 - **Order Management**: Create, view, search orders
 - **"Paste Chat" Feature**: LLM auto-fills form from raw text
 - **Stock Levels**: View only (no COGS)
 - **Order Status Tracking**: Real-time updates from packer
 
 ### Packer Dashboard
+
 - **Packing Queue**: List of `status: "paid"` orders
 - **VAPI Interface**: Voice control button
 - **Order Details**: Recipient, items, bin locations, SOPs
@@ -519,16 +570,19 @@ export default function Dashboard() {
 ## Deployment Architecture
 
 ### Frontend
+
 - **Build**: Rsbuild (Rspack) → `dist/`
 - **Hosting**: Vercel/Netlify with wildcard subdomain (`*.whatthepack.today`)
 - **Routing**: Wouter (client-side)
 
 ### Backend
+
 - **Convex**: Serverless functions + real-time DB
 - **Deploy**: `bunx convex deploy --prod`
 - **Env vars**: Set in Convex dashboard (Auth0, OpenAI, Resend, VAPI, ShipEngine secrets)
 
 ### Auth0 Configuration
+
 1. **Applications**: SPA (frontend) + M2M (Management API)
 2. **Organizations**: Enable Organizations feature
 3. **Roles**: Create `owner`, `admin`, `packer` roles
@@ -537,6 +591,7 @@ export default function Dashboard() {
 6. **Organization Metadata**: Configure ShipEngine key field
 
 ### Integrations
+
 - **VAPI**: Configure webhook URL → `https://api.whatthepack.today/vapi`
 - **Resend**: Verify domain `whatthepack.today`, set DNS records
 - **ShipEngine**: Owner provides key via Integrations page
@@ -546,28 +601,33 @@ export default function Dashboard() {
 ## Security Considerations
 
 ### Multi-Tenancy Enforcement
+
 - All database queries filter by `orgId`
 - Indexes created: `by_orgId`, `by_org_status`, `by_org_created`
 - Server-side validation: `requireOrgAccess(ctx, orgId)`
 
 ### Role-Based Access Control
+
 - JWT contains `https://whatthepack.today/roles` and `https://whatthepack.today/orgId`
 - Every sensitive operation checks `requireRole(ctx, orgId, allowedRoles)`
 - Client-side: Route guards block UI rendering
 - Server-side: Mutations/queries throw errors on unauthorized access
 
 ### API Key Protection
+
 - ShipEngine key in Auth0 Organization Metadata (encrypted at rest)
 - Retrieved via Auth0 Management API M2M token
 - Only `internalAction` can access (never exposed to client)
 - Audit log tracks all retrievals
 
 ### Webhook Security
+
 - VAPI: Signature verification with `VAPI_WEBHOOK_SECRET`
 - Auth0: Bearer token matches `CONVEX_WEBHOOK_SECRET`
 - Payload validation with Zod schemas
 
 ### MFA Enforcement
+
 - Owner role required for Integrations page (ShipEngine key)
 - Owner role required for Staff Management
 - Auth0 enforces MFA via risk-based policies
@@ -589,16 +649,19 @@ export default function Dashboard() {
 ## Why This Approach Works
 
 ### vs. Marketplaces
+
 - **100% profit**: No commission fees (5-10% saved)
 - **Own customer data**: Build marketing asset vs. renting from platform
 - **Flexible payments**: Support manual transfers (zero payment gateway fees)
 
 ### vs. Generic Logistics Software
+
 - **Security-first**: Designed for delegation from day one, not retrofitted
 - **AI-native**: Voice, RAG, and agents are core features, not add-ons
 - **Role-aware**: Every feature considers "who is using this?" before "what can they do?"
 
 ### vs. Building Custom
+
 - **Auth0 handles complexity**: Organizations, Roles, MFA, Org Metadata out-of-the-box
 - **Convex handles scale**: Real-time DB + serverless functions with automatic scaling
 - **Platform-provided AI**: OpenAI + Resend + VAPI integrated, not DIY

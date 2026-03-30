@@ -14,6 +14,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 **GitHub Issue Watcher** is an intelligent issue monitoring platform that tracks GitHub repositories for keyword-matched issues and uses OpenAI to analyze relevance with precision scoring. It features a task queue system, rate limiting, batch processing, and automated email notifications—keeping developers informed without noise.
 
 ### Why it matters
+
 - **AI relevance scoring**: OpenAI analyzes each issue for true relevance (0-100 score), not just keyword matching—eliminates false positives
 - **Smart batching**: Processes 1000 issues at a time with concurrent workers, optimized for provider rate limits
 - **Task queue system**: Distributed worker architecture with locks, retries, and priority queueing
@@ -22,6 +23,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 - **Real-time dashboard**: Live updates via Convex with sortable tables and expand/collapse views
 
 ### How it works (brief)
+
 1. **User submits**: GitHub repo URL + keyword (e.g., "bug", "feature request", "security")
 2. **Fetch issues**: GitHub GraphQL API pulls all issues with pagination cursor
 3. **Queue tasks**: Each issue becomes a task in `analysis_tasks` table
@@ -30,6 +32,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 6. **Email notifications**: Resend sends progressive updates (every 200) + final digest
 
 ### Stack
+
 - **Frontend**: React 19 + TypeScript + Mantine UI
 - **Backend**: Convex (serverless, real-time DB, cron jobs)
 - **Auth**: Convex Auth (email/password + GitHub OAuth)
@@ -45,7 +48,9 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 Developers monitoring GitHub repositories face critical challenges:
 
 ### 1. **Keyword matching is too broad**
+
 Searching for "bug" returns:
+
 - Actual bugs
 - Feature requests mentioning "not a bug"
 - Documentation updates about bug fixes
@@ -55,6 +60,7 @@ Searching for "bug" returns:
 **Result**: 80% false positives, wasted time reviewing irrelevant issues.
 
 ### 2. **Manual filtering doesn't scale**
+
 - Large repos: 1000+ issues to review
 - Multiple repos: Exponential complexity
 - Label inconsistency: Not all maintainers use standardized labels
@@ -63,6 +69,7 @@ Searching for "bug" returns:
 **Result**: Developers miss critical issues or burn hours on manual triage.
 
 ### 3. **Notification overload**
+
 - GitHub email notifications: All or nothing (can't filter by relevance)
 - Watch repos: Too noisy (every comment triggers notification)
 - Custom queries: Limited to basic keyword/label filters
@@ -70,7 +77,9 @@ Searching for "bug" returns:
 **Result**: Notification fatigue leads to ignoring important issues.
 
 ### 4. **No context-aware understanding**
+
 Traditional keyword search can't:
+
 - Understand semantic meaning ("vulnerability" = "security issue")
 - Detect implied relevance (issue about "crash" is relevant to "stability")
 - Assess severity or urgency from tone/details
@@ -86,16 +95,19 @@ GitHub Issue Watcher combines GitHub API automation with LLM analysis to deliver
 ### 1. Smart Issue Fetching (GitHub GraphQL)
 
 **Why GraphQL over REST?**
+
 - Fetch only needed fields (reduce bandwidth)
 - Paginate with cursor (efficient for large repos)
 - Single query gets issues + labels (no N+1 problem)
 
 **Query structure**:
+
 <CodeBlockFrame title="graphql">
+
 ```graphql
-query($owner: String!, $name: String!, $after: String) {
+query ($owner: String!, $name: String!, $after: String) {
   repository(owner: $owner, name: $name) {
-    issues(first: 100, after: $after, orderBy: {field: CREATED_AT, direction: DESC}) {
+    issues(first: 100, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) {
       nodes {
         id
         number
@@ -116,10 +128,13 @@ query($owner: String!, $name: String!, $after: String) {
   }
 }
 ```
+
 </CodeBlockFrame>
 
 **Implementation** (simplified):
+
 <CodeBlockFrame title="convex/githubActions.ts">
+
 ```typescript
 export const fetchAllIssues = action({
   args: { repoUrl: v.string(), keyword: v.string() },
@@ -133,23 +148,22 @@ export const fetchAllIssues = action({
       const issues = result.repository.issues.nodes;
 
       // Filter by keyword (title + body contains keyword)
-      const matched = issues.filter(issue =>
-        issue.title.toLowerCase().includes(args.keyword.toLowerCase()) ||
-        issue.body?.toLowerCase().includes(args.keyword.toLowerCase())
+      const matched = issues.filter(
+        (issue) =>
+          issue.title.toLowerCase().includes(args.keyword.toLowerCase()) ||
+          issue.body?.toLowerCase().includes(args.keyword.toLowerCase()),
       );
 
       allIssues.push(...matched);
 
-      cursor = result.repository.issues.pageInfo.hasNextPage
-        ? result.repository.issues.pageInfo.endCursor
-        : null;
-
+      cursor = result.repository.issues.pageInfo.hasNextPage ? result.repository.issues.pageInfo.endCursor : null;
     } while (cursor);
 
     return allIssues;
-  }
+  },
 });
 ```
+
 </CodeBlockFrame>
 
 **Batch processing**: Fetches 100 issues per request, processes in batches of 1000 for memory efficiency.
@@ -159,7 +173,9 @@ export const fetchAllIssues = action({
 Each issue is analyzed by GPT-4o-mini to determine true relevance:
 
 **Prompt engineering**:
+
 <CodeBlockFrame title="">
+
 ```typescript
 const systemPrompt = `
 You are a GitHub issue relevance analyzer. Given a keyword and an issue, determine:
@@ -198,12 +214,15 @@ ${issue.body.slice(0, 3000)} // Truncate to avoid token limits
 Analyze relevance.
 `;
 ```
+
 </CodeBlockFrame>
 
 **Non-multiple-of-5 enforcement**: Scores are adjusted ±1 if divisible by 5 (prevents LLM bias toward round numbers like 50, 75, 80).
 
 **Retry logic with exponential backoff**:
+
 <CodeBlockFrame title="convex/llmAnalysis.ts">
+
 ```typescript
 async function safeAnalyzeIssue(openai, prompt, model, issue) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -212,24 +231,24 @@ async function safeAnalyzeIssue(openai, prompt, model, issue) {
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
+          { role: "user", content: prompt },
         ],
         temperature: 0.3, // Lower temp for consistency
-        max_tokens: 300
+        max_tokens: 300,
       });
 
       const text = response.choices[0].message.content;
       return extractAndParseJSON(text);
-
     } catch (error) {
       if (attempt === MAX_RETRIES) throw error;
 
       const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
 ```
+
 </CodeBlockFrame>
 
 **Response parsing**: Handles multiple formats (clean JSON, fenced code blocks, inline JSON strings).
@@ -237,12 +256,14 @@ async function safeAnalyzeIssue(openai, prompt, model, issue) {
 ### 3. Task Queue System with Distributed Workers
 
 **Architecture**:
+
 ```
 User submits query → Fetch GitHub issues → Enqueue analysis tasks →
 Workers process concurrently → Store results → Send email
 ```
 
 **Task lifecycle**:
+
 1. **Created**: Issue added to `analysis_tasks` table with status "queued"
 2. **Queued**: Awaiting worker pickup
 3. **Running**: Worker acquired task (locked)
@@ -250,7 +271,9 @@ Workers process concurrently → Store results → Send email
 5. **Failed**: Max retries exhausted
 
 **Worker implementation**:
+
 <CodeBlockFrame title="convex/llmWorker.ts">
+
 ```typescript
 export const processWorkBatch = internalAction({
   args: { batchSize: v.number() },
@@ -258,7 +281,7 @@ export const processWorkBatch = internalAction({
     // Acquire distributed lock (prevent concurrent workers on same report)
     const locked = await ctx.runMutation(api.llmWorker.acquireLock, {
       name: "llmWorker",
-      ttlMs: 60000 // 60s lease
+      ttlMs: 60000, // 60s lease
     });
 
     if (!locked) return { processed: 0 };
@@ -266,62 +289,61 @@ export const processWorkBatch = internalAction({
     try {
       // Select tasks from queue (priority + FIFO)
       const tasks = await ctx.runQuery(api.queue.selectQueuedTasks, {
-        limit: args.batchSize
+        limit: args.batchSize,
       });
 
       // Mark as running
       await ctx.runMutation(api.llmWorker.markTasksRunning, {
-        taskIds: tasks.map(t => t._id)
+        taskIds: tasks.map((t) => t._id),
       });
 
       // Process concurrently (max 3 to avoid rate limits)
       const chunks = chunkArray(tasks, MAX_CONCURRENT);
       for (const chunk of chunks) {
-        await Promise.all(
-          chunk.map(task => processTask(ctx, task))
-        );
+        await Promise.all(chunk.map((task) => processTask(ctx, task)));
       }
 
       return { processed: tasks.length };
-
     } finally {
       // Release lock
       await ctx.runMutation(api.llmWorker.releaseLock, {
-        name: "llmWorker"
+        name: "llmWorker",
       });
     }
-  }
+  },
 });
 ```
+
 </CodeBlockFrame>
 
 **Cron job**: Runs every 5 minutes to process pending tasks.
+
 <CodeBlockFrame title="convex/crons.ts">
+
 ```typescript
-crons.interval(
-  "process llm tasks",
-  { minutes: 5 },
-  internal.llmWorker.processWorkBatch,
-  { batchSize: 10 }
-);
+crons.interval("process llm tasks", { minutes: 5 }, internal.llmWorker.processWorkBatch, { batchSize: 10 });
 ```
+
 </CodeBlockFrame>
 
 ### 4. Rate Limiting (Token + Request Tracking)
 
 **Why rate limit?**
+
 - OpenAI: 10k RPM, 2M TPM (tokens per minute) on paid tier
 - GitHub: 5k requests/hour for authenticated users
 - Prevent single user from exhausting quota
 
 **Implementation**:
+
 <CodeBlockFrame title="convex/rateLimiter.ts">
+
 ```typescript
 export const checkRateLimit = mutation({
   args: {
     userId: v.id("users"),
     requestCost: v.number(), // Number of requests
-    tokenCost: v.number()    // Estimated tokens
+    tokenCost: v.number(), // Estimated tokens
   },
   handler: async (ctx, args) => {
     const bucket = `user:${args.userId}`;
@@ -330,7 +352,7 @@ export const checkRateLimit = mutation({
 
     let limit = await ctx.db
       .query("rate_limits")
-      .withIndex("bucket", q => q.eq("bucket", bucket))
+      .withIndex("bucket", (q) => q.eq("bucket", bucket))
       .first();
 
     if (!limit) {
@@ -339,7 +361,7 @@ export const checkRateLimit = mutation({
         bucket,
         requests: 0,
         tokens: 0,
-        updatedAt: now
+        updatedAt: now,
       });
     }
 
@@ -348,7 +370,7 @@ export const checkRateLimit = mutation({
       await ctx.db.patch(limit._id, {
         requests: 0,
         tokens: 0,
-        updatedAt: now
+        updatedAt: now,
       });
       limit = { ...limit, requests: 0, tokens: 0 };
     }
@@ -369,13 +391,14 @@ export const checkRateLimit = mutation({
     await ctx.db.patch(limit._id, {
       requests: limit.requests + args.requestCost,
       tokens: limit.tokens + args.tokenCost,
-      updatedAt: now
+      updatedAt: now,
     });
 
     return { allowed: true };
-  }
+  },
 });
 ```
+
 </CodeBlockFrame>
 
 **Token estimation**: `title.length + body.length + 500` (rough heuristic).
@@ -385,26 +408,29 @@ export const checkRateLimit = mutation({
 **Strategy**: Send partial results every 200 issues to keep user informed during long-running jobs.
 
 **Email types**:
+
 1. **Partial digest**: After every 200 analyzed issues
 2. **Final digest**: When all issues processed
 3. **Error notification**: If job fails
 
 **Template** (React Email):
+
 <CodeBlockFrame title="src/components/dashboard/template/IssueReportEmail.tsx">
+
 ```tsx
 export function IssueReportEmail({
   repoUrl,
   keyword,
   issues,
-  isPartial
+  isPartial,
 }: {
   repoUrl: string;
   keyword: string;
   issues: Issue[];
   isPartial: boolean;
 }) {
-  const highRelevance = issues.filter(i => i.relevanceScore >= 70);
-  const mediumRelevance = issues.filter(i => i.relevanceScore >= 40 && i.relevanceScore < 70);
+  const highRelevance = issues.filter((i) => i.relevanceScore >= 70);
+  const mediumRelevance = issues.filter((i) => i.relevanceScore >= 40 && i.relevanceScore < 70);
 
   return (
     <Html>
@@ -420,7 +446,7 @@ export function IssueReportEmail({
 
           <Section>
             <Heading as="h2">High Relevance ({highRelevance.length})</Heading>
-            {highRelevance.map(issue => (
+            {highRelevance.map((issue) => (
               <Row key={issue.id}>
                 <Column>
                   <Link href={`${repoUrl}/issues/${issue.number}`}>
@@ -441,8 +467,8 @@ export function IssueReportEmail({
 
           {isPartial && (
             <Text>
-              <strong>This is a partial report.</strong> Analysis continues in background.
-              You'll receive the final report when complete.
+              <strong>This is a partial report.</strong> Analysis continues in background. You'll receive the final report when
+              complete.
             </Text>
           )}
         </Container>
@@ -451,15 +477,18 @@ export function IssueReportEmail({
   );
 }
 ```
+
 </CodeBlockFrame>
 
 **Sending logic**:
+
 <CodeBlockFrame title="convex/githubIssues.ts">
+
 ```typescript
 export const sendProgressiveEmail = mutation({
   args: {
     reportId: v.id("reports"),
-    currentIssueCount: v.number()
+    currentIssueCount: v.number(),
   },
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
@@ -469,18 +498,19 @@ export const sendProgressiveEmail = mutation({
     if (args.currentIssueCount % BATCH_SIZE === 0) {
       await ctx.scheduler.runAfter(0, internal.resend.sendIssueReport, {
         reportId: args.reportId,
-        isPartial: true
+        isPartial: true,
       });
 
       // Update last email sent timestamp
       await ctx.db.patch(args.reportId, {
         lastPartialEmailAt: Date.now(),
-        emailsSent: (report.emailsSent || 0) + 1
+        emailsSent: (report.emailsSent || 0) + 1,
       });
     }
-  }
+  },
 });
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -490,41 +520,48 @@ export const sendProgressiveEmail = mutation({
 ### Core Tables
 
 **reports**: Stores completed analysis results
+
 <CodeBlockFrame title="">
+
 ```typescript
 reports: defineTable({
-  repoUrl: v.string(),           // e.g., "https://github.com/facebook/react"
-  keyword: v.string(),           // Search term
+  repoUrl: v.string(), // e.g., "https://github.com/facebook/react"
+  keyword: v.string(), // Search term
   userEmail: v.string(),
   userId: v.id("users"),
-  issues: v.array(v.object({
-    id: v.string(),              // GitHub issue ID
-    number: v.number(),          // Issue number
-    title: v.string(),
-    body: v.string(),
-    labels: v.array(v.string()),
-    createdAt: v.string(),
-    relevanceScore: v.number(),  // 0-100 (AI-scored)
-    explanation: v.string(),     // AI reasoning
-    matchedTerms: v.optional(v.array(v.string())),
-    evidence: v.optional(v.array(v.string()))
-  })),
+  issues: v.array(
+    v.object({
+      id: v.string(), // GitHub issue ID
+      number: v.number(), // Issue number
+      title: v.string(),
+      body: v.string(),
+      labels: v.array(v.string()),
+      createdAt: v.string(),
+      relevanceScore: v.number(), // 0-100 (AI-scored)
+      explanation: v.string(), // AI reasoning
+      matchedTerms: v.optional(v.array(v.string())),
+      evidence: v.optional(v.array(v.string())),
+    }),
+  ),
   createdAt: v.number(),
   lastFetched: v.number(),
   batchCursor: v.optional(v.string()), // GitHub pagination cursor
   isComplete: v.boolean(),
   isCanceled: v.optional(v.boolean()),
   emailsSent: v.optional(v.number()),
-  lastPartialEmailAt: v.optional(v.number())
+  lastPartialEmailAt: v.optional(v.number()),
 })
-.index("userEmail", ["userEmail"])
-.index("userId", ["userId"])
-.index("repoUrl_keyword", ["repoUrl", "keyword"])
+  .index("userEmail", ["userEmail"])
+  .index("userId", ["userId"])
+  .index("repoUrl_keyword", ["repoUrl", "keyword"]);
 ```
+
 </CodeBlockFrame>
 
 **analysis_tasks**: Task queue for LLM workers
+
 <CodeBlockFrame title="">
+
 ```typescript
 analysis_tasks: defineTable({
   reportId: v.id("reports"),
@@ -536,45 +573,50 @@ analysis_tasks: defineTable({
     title: v.string(),
     body: v.string(),
     labels: v.array(v.string()),
-    createdAt: v.string()
+    createdAt: v.string(),
   }),
-  estTokens: v.number(),         // Estimated token cost
-  status: v.string(),            // queued, running, completed, failed
-  priority: v.number(),          // Lower = higher priority
-  attempts: v.number(),          // Retry counter
+  estTokens: v.number(), // Estimated token cost
+  status: v.string(), // queued, running, completed, failed
+  priority: v.number(), // Lower = higher priority
+  attempts: v.number(), // Retry counter
   error: v.optional(v.string()),
   createdAt: v.number(),
-  updatedAt: v.number()
+  updatedAt: v.number(),
 })
-.index("status_priority", ["status", "priority"])
-.index("report_status", ["reportId", "status"])
-.index("owner_status", ["ownerUserId", "status"])
+  .index("status_priority", ["status", "priority"])
+  .index("report_status", ["reportId", "status"])
+  .index("owner_status", ["ownerUserId", "status"]);
 ```
+
 </CodeBlockFrame>
 
 **rate_limits**: Per-user rate tracking
+
 <CodeBlockFrame title="">
+
 ```typescript
 rate_limits: defineTable({
-  bucket: v.string(),            // "user:userId"
+  bucket: v.string(), // "user:userId"
   requests: v.number(),
   tokens: v.number(),
-  updatedAt: v.number()
-})
-.index("bucket", ["bucket"])
+  updatedAt: v.number(),
+}).index("bucket", ["bucket"]);
 ```
+
 </CodeBlockFrame>
 
 **locks**: Distributed locks for workers
+
 <CodeBlockFrame title="">
+
 ```typescript
 locks: defineTable({
-  name: v.string(),              // Lock identifier
-  leaseExpiresAt: v.number(),    // Expiry timestamp
-  owner: v.optional(v.string())  // Worker ID
-})
-.index("name", ["name"])
+  name: v.string(), // Lock identifier
+  leaseExpiresAt: v.number(), // Expiry timestamp
+  owner: v.optional(v.string()), // Worker ID
+}).index("name", ["name"]);
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -584,6 +626,7 @@ locks: defineTable({
 ### Pages & Components
 
 **Dashboard** (`/`):
+
 - Authentication form (email/password + GitHub OAuth)
 - Issue form modal (submit repo URL + keyword)
 - Reports list (all user reports)
@@ -592,7 +635,9 @@ locks: defineTable({
 **Key components**:
 
 1. **IssueFormModal**:
+
 <CodeBlockFrame title="">
+
 ```tsx
 function IssueFormModal({ onReportGenerated }) {
   const [repoUrl, setRepoUrl] = useState("");
@@ -613,27 +658,24 @@ function IssueFormModal({ onReportGenerated }) {
   );
 }
 ```
+
 </CodeBlockFrame>
 
 2. **ReportsList**:
+
 <CodeBlockFrame title="">
+
 ```tsx
 function ReportsList({ reportId, setReportId }) {
   const reports = useQuery(api.githubIssues.listReports);
 
   return (
     <Stack>
-      {reports?.map(report => (
-        <Card
-          key={report._id}
-          onClick={() => setReportId(report._id)}
-          className={reportId === report._id ? "selected" : ""}
-        >
+      {reports?.map((report) => (
+        <Card key={report._id} onClick={() => setReportId(report._id)} className={reportId === report._id ? "selected" : ""}>
           <Text fw={700}>{report.keyword}</Text>
           <Text size="sm">{report.repoUrl}</Text>
-          <Badge color={report.isComplete ? "green" : "yellow"}>
-            {report.isComplete ? "Complete" : "Processing"}
-          </Badge>
+          <Badge color={report.isComplete ? "green" : "yellow"}>{report.isComplete ? "Complete" : "Processing"}</Badge>
           <Text size="xs">{report.issues.length} issues</Text>
         </Card>
       ))}
@@ -641,10 +683,13 @@ function ReportsList({ reportId, setReportId }) {
   );
 }
 ```
+
 </CodeBlockFrame>
 
 3. **IssuesTable**:
+
 <CodeBlockFrame title="">
+
 ```tsx
 function IssuesTable({ reportId }) {
   const report = useQuery(api.githubIssues.getReport, { reportId });
@@ -652,9 +697,7 @@ function IssuesTable({ reportId }) {
 
   useEffect(() => {
     // Sort by relevance score (descending)
-    const sorted = [...(report?.issues || [])].sort(
-      (a, b) => b.relevanceScore - a.relevanceScore
-    );
+    const sorted = [...(report?.issues || [])].sort((a, b) => b.relevanceScore - a.relevanceScore);
     setSortedIssues(sorted);
   }, [report]);
 
@@ -670,7 +713,7 @@ function IssuesTable({ reportId }) {
         </tr>
       </thead>
       <tbody>
-        {sortedIssues.map(issue => (
+        {sortedIssues.map((issue) => (
           <tr key={issue.id}>
             <td>
               <Anchor href={`${report.repoUrl}/issues/${issue.number}`} target="_blank">
@@ -678,14 +721,14 @@ function IssuesTable({ reportId }) {
               </Anchor>
             </td>
             <td>
-              <Badge color={getScoreColor(issue.relevanceScore)}>
-                {issue.relevanceScore}
-              </Badge>
+              <Badge color={getScoreColor(issue.relevanceScore)}>{issue.relevanceScore}</Badge>
             </td>
             <td>{issue.explanation}</td>
             <td>
-              {issue.labels.map(label => (
-                <Badge key={label} size="sm">{label}</Badge>
+              {issue.labels.map((label) => (
+                <Badge key={label} size="sm">
+                  {label}
+                </Badge>
               ))}
             </td>
             <td>{formatDate(issue.createdAt)}</td>
@@ -696,6 +739,7 @@ function IssuesTable({ reportId }) {
   );
 }
 ```
+
 </CodeBlockFrame>
 
 **Real-time updates**: Convex queries auto-refresh when data changes (no polling needed).
@@ -707,12 +751,14 @@ function IssuesTable({ reportId }) {
 ### Why OpenAI for Relevance Scoring?
 
 **Alternatives**:
+
 - **Keyword matching**: Too broad, 80% false positives
 - **Label filtering**: Inconsistent across repos, requires manual setup
 - **Embeddings + similarity**: Requires vector DB, slower, less explainable
 - **Rule-based ML**: Needs training data, brittle
 
 **OpenAI wins**:
+
 - Semantic understanding (detects relevance even without exact keyword)
 - Explainable scores (provides reasoning in natural language)
 - No training data needed (zero-shot learning)
@@ -722,11 +768,13 @@ function IssuesTable({ reportId }) {
 ### Why Task Queue vs. Direct Processing?
 
 **Direct processing issues**:
+
 - Long-running requests timeout (Convex Actions: 5min limit)
 - No retry on failure
 - Blocking (user waits for all issues)
 
 **Task queue benefits**:
+
 - Resilient (tasks persist across failures)
 - Scalable (multiple workers process concurrently)
 - Interruptible (user can cancel, progress saved)
@@ -735,11 +783,13 @@ function IssuesTable({ reportId }) {
 ### Why Convex Backend?
 
 **Alternatives**:
+
 - **Firebase**: No serverless functions for complex logic
 - **Supabase**: PostgreSQL not ideal for real-time + task queues
 - **Custom Express + MongoDB**: More setup, no built-in auth/cron
 
 **Convex advantages**:
+
 - Real-time queries (no polling, WebSocket under the hood)
 - Serverless functions (actions, queries, mutations)
 - Integrated auth (email/password + OAuth)
@@ -754,6 +804,7 @@ function IssuesTable({ reportId }) {
 **Solution**: Send partial digests every 200 issues (10-20 seconds of processing).
 
 **Benefits**:
+
 - Transparency (user sees progress)
 - Early insights (high-relevance issues surfaced immediately)
 - Reduced anxiety (no "black box" wait)
@@ -792,6 +843,7 @@ function IssuesTable({ reportId }) {
 ## Future Enhancements
 
 ### Advanced Features
+
 - **Multi-repo monitoring**: Track multiple repos in single query
 - **Label filtering**: Pre-filter issues by labels before LLM analysis
 - **Slack integration**: Send notifications to Slack channels
@@ -799,12 +851,14 @@ function IssuesTable({ reportId }) {
 - **Webhook triggers**: Real-time monitoring (GitHub webhook → instant analysis)
 
 ### UX Improvements
+
 - **Score calibration**: User feedback to tune relevance thresholds
 - **Saved queries**: Bookmark frequently monitored repos
 - **Export**: Download results as CSV/JSON
 - **Dark mode**: System preference detection
 
 ### Infrastructure
+
 - **Horizontal scaling**: Multiple worker instances for high throughput
 - **Priority tiers**: Premium users get faster processing
 - **Cost analytics**: Show token usage per report
@@ -812,7 +866,9 @@ function IssuesTable({ reportId }) {
 ---
 
 ## Architecture Diagram
+
 <center>
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                   FRONTEND (React)                      │
@@ -852,7 +908,9 @@ function IssuesTable({ reportId }) {
 │  GitHub API  │   │  OpenAI GPT-4o   │   │   Resend     │
 │  (GraphQL)   │   │  (Relevance)     │   │  (Email)     │
 └──────────────┘   └──────────────────┘   └──────────────┘
+
 ```
+
 </center>
 
 ---
@@ -860,21 +918,25 @@ function IssuesTable({ reportId }) {
 ## Security & Best Practices
 
 ### API Keys
+
 - **GitHub token**: Required for authenticated API calls (5k req/hour vs 60/hour unauthenticated)
 - **OpenAI key**: Server-side only (never exposed to client)
 - **Resend key**: Server-side only
 
 ### Rate Limiting
+
 - **Per-user limits**: Prevent single user from exhausting quota
 - **Token estimation**: Pre-check before LLM call
 - **Graceful degradation**: Return cached results if rate limit hit
 
 ### Authentication
+
 - **Convex Auth**: Built-in email verification + OAuth
 - **Session management**: Secure tokens with auto-refresh
 - **Password hashing**: Bcrypt with salt
 
 ### Data Privacy
+
 - **No issue content storage**: Only metadata (title, number) stored permanently
 - **Rate limit data**: Auto-expires after 1 hour
 - **User data deletion**: GDPR-compliant account deletion

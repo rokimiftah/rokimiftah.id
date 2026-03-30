@@ -14,6 +14,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 **SAH-in Aja!** is Indonesia's first AI-powered halal certification preparation platform built for the nation's 30+ million MSMEs. It provides **Vision AI assessment** of kitchen/production facilities, **smart document generation** for SJPH compliance, and a **guardrailed chatbot** for 24/7 halal certification guidance—running on a credit-based system that resets daily, optimized for low-end devices over 4G networks.
 
 ### Why it matters
+
 - **Democratizes access**: Free tier with 3 assessments + 3 documents + 5 chats/day removes financial barrier for struggling UMKM
 - **Vision AI democratization**: Upload 5 photos of kitchen, get audit-grade assessment in 2 minutes (model: Claude Sonnet 4.5)
 - **Smart document generation**: 5 SJPH templates (SOP, supplier agreements, traceability forms) auto-populated from business data
@@ -22,6 +23,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 - **Low-end optimized**: Runs smooth on Samsung A03, Redmi 9A, Oppo A16 (2-3GB RAM, Android 11+)
 
 ### How it works (brief)
+
 1. **Login seamlessly**: Magic link + Google OAuth + GitHub OAuth via Convex Auth
 2. **Siap Halal**: Upload 5 kitchen photos → Vision AI (Claude Sonnet 4.5) scans for haram materials, contamination risks → Score 0-100 with actionable fixes
 3. **Dokumen Halal**: Choose template → Fill business info → AI generates SJPH-compliant document → Export to DOCX
@@ -29,6 +31,7 @@ import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 5. **Credit tracking**: Automatic daily reset with rollover protection via `user_daily_credits` table
 
 ### Stack
+
 - **Frontend**: React 19 + TypeScript + Wouter (routing) + Motion (animations) + Tailwind CSS 4.0
 - **Backend**: Convex (real-time DB + serverless functions, self-hosted via Docker)
 - **AI/ML**: Kolosal API (Claude Sonnet 4.5 for vision & text, alternative models: Qwen 3 VL, Kimi K2, GLM 4.6)
@@ -62,6 +65,7 @@ SAH-in Aja! solves the certification gap with **three AI agents** running on a *
 Upload up to **5 photos** of your kitchen, and Claude Sonnet 4.5 Vision analyzes it against **SJPH HAS 23000** standards.
 
 **Analysis framework** (5 criteria, 100 points total):
+
 1. **Bahan (Materials)** - 30 pts: No haram substances visible, proper halal labels, separate storage
 2. **Fasilitas (Production Facility)** - 25 pts: Cleanliness, no cross-contamination, no pets
 3. **Peralatan (Equipment)** - 20 pts: Clean equipment, no shared tools with haram materials
@@ -71,6 +75,7 @@ Upload up to **5 photos** of your kitchen, and Claude Sonnet 4.5 Vision analyzes
 ### Vision AI Workflow
 
 <CodeBlockFrame title="convex/analyzeHalal.ts">
+
 ```typescript
 export const analyzeKitchen = action({
   args: {
@@ -112,9 +117,11 @@ export const analyzeKitchen = action({
     // Parse structured JSON output
     const { score, findings, actionItems, summaryPoints } = JSON.parse(response.choices[0].message.content);
     return { score, findings, actionItems, summaryPoints, photoUrls };
-  }
+
+}
 });
 ```
+
 </CodeBlockFrame>
 
 ### System Prompt Engineering
@@ -122,6 +129,7 @@ export const analyzeKitchen = action({
 The key is making AI speak like a friendly neighborhood auditor, not a bureaucrat:
 
 <CodeBlockFrame title="convex/lib/kolosal.ts">
+
 ```typescript
 export const SYSTEM_PROMPTS = {
   HALAL_ASSESSMENT: `Anda adalah auditor kehalalan berpengalaman untuk UMKM Indonesia...
@@ -140,9 +148,11 @@ PENTING:
 - Tetap gunakan bahasa yang sopan dan mendidik, tapi tegas dalam hal kepatuhan syariah`
 };
 ```
+
 </CodeBlockFrame>
 
 **Sample Output** (not a scary report, but a friendly nudge):
+
 ```json
 {
   "score": 75,
@@ -174,21 +184,23 @@ PENTING:
 
 **5 templates** covering SJPH HAS 23000 requirements, all generating in **DOCX format** (compatible with Microsoft Word, Google Docs):
 
-| Template | Use Case | Pages |
-|----------|----------|-------|
-| SOP Produksi Halal | Standard operating procedures | 3-5 |
-| Perjanjian Supplier Halal | Supplier commitment contracts | 2-3 |
-| Daftar Bahan Baku | Raw material inventory with halal status | 1-2 |
-| Form Traceability | Batch tracking from supplier to finished product | 1-2 |
-| Surat Komitmen Halal | Owner's halal commitment letter | 1 |
+| Template                  | Use Case                                         | Pages |
+| ------------------------- | ------------------------------------------------ | ----- |
+| SOP Produksi Halal        | Standard operating procedures                    | 3-5   |
+| Perjanjian Supplier Halal | Supplier commitment contracts                    | 2-3   |
+| Daftar Bahan Baku         | Raw material inventory with halal status         | 1-2   |
+| Form Traceability         | Batch tracking from supplier to finished product | 1-2   |
+| Surat Komitmen Halal      | Owner's halal commitment letter                  | 1     |
 
 ### Document Generation Architecture
 
 The system uses **two-stage prompt engineering**:
+
 1. **Template prompt** defining document structure
 2. **Dynamic data injection** from user input
 
 <CodeBlockFrame title="convex/generateDocument.ts">
+
 ```typescript
 const TEMPLATE_PROMPTS: Record<string, string> = {
   sop_produksi: `Buat SOP Produksi Halal yang mencakup:\n1. Tujuan...\n2. Prosedur Pemilihan...\n...`,
@@ -210,6 +222,7 @@ export const generateHalalDocument = action({
     const userContent = `${templatePrompt}
 
 DATA USAHA:
+
 - Nama: ${args.businessInfo.name}
 - Alamat: ${args.businessInfo.address}
 - Pemilik: ${args.businessInfo.owner}
@@ -238,15 +251,18 @@ ${args.ingredients.map(i => `- ${i.name} (Supplier: ${i.supplier}, Status: ${i.h
 
     const data = await response.json();
     return { content: data.choices[0].message.content }; // Plain text format
-  }
+
+}
 });
 ```
+
 </CodeBlockFrame>
 
 **Why plain text, not markdown?**
 DOCX generation requires clean, structured text. The frontend uses `docx` npm library to convert plain text → formatted Word documents:
 
 <CodeBlockFrame title="src/features/dokumen-halal/hooks/useDocumentGenerator.ts">
+
 ```typescript
 // Pseudo-code showing conversion logic
 import { Document, Packer, Paragraph, TextRun } from "docx";
@@ -283,6 +299,7 @@ const generateDocx = (plainText: string, templateType: string) => {
   Packer.toBlob(doc).then(blob => saveAs(blob, `${templateType}_${Date.now()}.docx`));
 };
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -294,6 +311,7 @@ This is where most chatbots fail: they either allow everything (risky) or block 
 ### Layer 1: Keyword Filtering (Fast Block)
 
 <CodeBlockFrame title="convex/consultHalal.ts">
+
 ```typescript
 const BLOCKED_KEYWORDS = [
   "bunuh", "racun", "bom", "senjata", "narkoba", "drugs", "teror",
@@ -303,9 +321,10 @@ const BLOCKED_KEYWORDS = [
 ];
 
 function containsBlockedContent(message: string): boolean {
-  return BLOCKED_KEYWORDS.some(keyword => message.toLowerCase().includes(keyword));
+return BLOCKED_KEYWORDS.some(keyword => message.toLowerCase().includes(keyword));
 }
 ```
+
 </CodeBlockFrame>
 
 ### Layer 2: Greeting Bypass
@@ -329,6 +348,7 @@ function isGreeting(message: string): boolean {
 For complex queries, use **Claude Sonnet 4.5** to determine if question is halal-related:
 
 <CodeBlockFrame title="convex/consultHalal.ts">
+
 ```typescript
 async function classifyTopicWithLLM(message: string, kolosal: Client) {
   const classificationPrompt = `Kamu adalah classifier untuk aplikasi "Asisten Halal".
@@ -337,6 +357,7 @@ KONTEKS PENTING: Karena ini Asisten Halal, pertanyaan AMBIGU harus diasumsikan t
 Contoh: "Apa saja dokumen yang diperlukan?" → TERKAIT (tentang dokumen sertifikasi halal)
 
 Topik TERKAIT halal:
+
 - Status halal/haram makanan, bahan masakan
 - Sertifikasi halal, dokumen, persyaratan, biaya
 - Bahan kritis (gelatin, emulsifier, alkohol)
@@ -348,17 +369,18 @@ Jawab dengan format JSON:
 
 Pertanyaan: "${message}"`;
 
-  const response = await kolosal.chat.completions.create({
-    model: KOLOSAL_MODELS.TEXT,
-    messages: [{ role: "user", content: classificationPrompt }],
-    temperature: 0, // Deterministic
-    max_tokens: 100
-  });
+const response = await kolosal.chat.completions.create({
+model: KOLOSAL_MODELS.TEXT,
+messages: [{ role: "user", content: classificationPrompt }],
+temperature: 0, // Deterministic
+max_tokens: 100
+});
 
-  const result = JSON.parse(response.choices[0].message.content);
-  return { isHalalRelated: result.isHalalRelated === true };
+const result = JSON.parse(response.choices[0].message.content);
+return { isHalalRelated: result.isHalalRelated === true };
 }
 ```
+
 </CodeBlockFrame>
 
 **Why this is smart:** False positives (allowing non-halal questions) are better than false negatives (blocking legitimate users). This respects the platform's purpose while maximizing utility.
@@ -368,6 +390,7 @@ Pertanyaan: "${message}"`;
 The chatbot can reference user's scan history for personalized advice:
 
 <CodeBlockFrame title="convex/consultHalal.ts">
+
 ```typescript
 export const chat = action({
   args: {
@@ -408,6 +431,7 @@ export const chat = action({
   }
 });
 ```
+
 </CodeBlockFrame>
 
 **Sample conversation**:
@@ -437,12 +461,14 @@ Cek kemasan gelatin Anda. Kalau tidak ada sertifikat, ganti dengan agar-agar."
 ### The Business Logic
 
 Each user gets daily credits (reset at 7 AM WIB / UTC+7). This balances:
+
 - **Fairness**: Everyone gets same daily allocation
 - **Abuse prevention**: Can't hoard credits
 - **Engagement**: Daily return visits
 - **Conversion funnel**: Heavy users can enter promo codes
 
 **Credit allocation**:
+
 - **Siap Halal**: 3 scans/day
 - **Dokumen Halal**: 3 documents/day
 - **Asisten Halal**: 5 chat sessions/day
@@ -450,56 +476,59 @@ Each user gets daily credits (reset at 7 AM WIB / UTC+7). This balances:
 ### Database Schema
 
 <CodeBlockFrame title="convex/schema.ts">
+
 ```typescript
 export default defineSchema({
   // ... auth tables
 
-  users: defineTable({
-    // ... user fields
-    credits: v.optional(v.number()), // Koin SAH (for future paid tier)
-    tier: v.optional(v.union(
-      v.literal("free"),
-      v.literal("eceran"),    // Tier 1: Small business
-      v.literal("juragan")     // Tier 2: Medium business
-    ))
-  }),
+users: defineTable({
+// ... user fields
+credits: v.optional(v.number()), // Koin SAH (for future paid tier)
+tier: v.optional(v.union(
+v.literal("free"),
+v.literal("eceran"), // Tier 1: Small business
+v.literal("juragan") // Tier 2: Medium business
+))
+}),
 
-  // Critical: Tracks daily usage
-  user_daily_credits: defineTable({
-    userId: v.id("users"),
-    date: v.string(), // Format: "2025-12-10" in UTC+7
-    siapHalalCredits: v.number(),
-    dokumenHalalCredits: v.number(),
-    asistenHalalChats: v.number()
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_date", ["userId", "date"]),
+// Critical: Tracks daily usage
+user_daily_credits: defineTable({
+userId: v.id("users"),
+date: v.string(), // Format: "2025-12-10" in UTC+7
+siapHalalCredits: v.number(),
+dokumenHalalCredits: v.number(),
+asistenHalalChats: v.number()
+})
+.index("by_user", ["userId"])
+.index("by_user_date", ["userId", "date"]),
 
-  // Promo code support (managed via Convex dashboard)
-  promo_codes: defineTable({
-    code: v.string(), // e.g., "SAH2025", case-sensitive
-    credits: v.number(), // Amount to add (e.g., 100)
-    maxUsage: v.optional(v.number()),
-    usageCount: v.number(),
-    expiresAt: v.optional(v.number()),
-    isActive: v.boolean()
-  }).index("by_code", ["code"]),
+// Promo code support (managed via Convex dashboard)
+promo_codes: defineTable({
+code: v.string(), // e.g., "SAH2025", case-sensitive
+credits: v.number(), // Amount to add (e.g., 100)
+maxUsage: v.optional(v.number()),
+usageCount: v.number(),
+expiresAt: v.optional(v.number()),
+isActive: v.boolean()
+}).index("by_code", ["code"]),
 
-  // Track promo usage per user
-  promo_code_usages: defineTable({
-    userId: v.id("users"),
-    promoCodeId: v.id("promo_codes"),
-    usedAt: v.number()
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_code", ["userId", "promoCodeId"])
+// Track promo usage per user
+promo_code_usages: defineTable({
+userId: v.id("users"),
+promoCodeId: v.id("promo_codes"),
+usedAt: v.number()
+})
+.index("by_user", ["userId"])
+.index("by_user_code", ["userId", "promoCodeId"])
 });
 ```
+
 </CodeBlockFrame>
 
 ### Credit Deduction Logic
 
 <CodeBlockFrame title="convex/credits.ts (simplified)">
+
 ```typescript
 export const deductCredit = internalMutation({
   args: {
@@ -554,11 +583,13 @@ export const deductCredit = internalMutation({
   }
 });
 ```
+
 </CodeBlockFrame>
 
 ### Promo Code System
 
 Admin can generate promo codes via Convex dashboard. When user redeems:
+
 1. Check `promo_codes.isActive` && `usageCount < maxUsage`
 2. Verify user hasn't used it before (`promo_code_usages` table check)
 3. Add credits to `user.credits` (for future paid tier)
@@ -612,6 +643,7 @@ Device: Samsung A03, Xiaomi Redmi 9A, Oppo A16
 ### Routing with Wouter (2KB gzipped)
 
 <CodeBlockFrame title="src/app/App.tsx">
+
 ```typescript
 import { Router, Route, Switch } from 'wouter';
 
@@ -633,6 +665,7 @@ export default function App() {
   );
 }
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -642,13 +675,16 @@ export default function App() {
 ### Why Self-Hosted?
 
 Indonesian UMKM data sovereignty is critical. Self-hosting ensures:
+
 - Data stays in Indonesia (VPS in Jakarta IDC)
 - Compliance with UU PDP (Personal Data Protection Law)
 - Lower latency for Indonesian users (20-50ms vs 200ms to US)
 - Cost predictability (flat VPS fee vs usage-based)
 
 ### Docker Architecture
+
 <center>
+
 ```
 ┌─────────────────────────────────────────┐
 │      VPS (Jakarta, 4 vCPU, 8GB RAM)     │
@@ -670,11 +706,13 @@ Indonesian UMKM data sovereignty is critical. Self-hosting ensures:
 │  └── CNAME → sahin.biz.id               │
 └─────────────────────────────────────────┘
 ```
+
 </center>
 
 ### Dockerfile
 
-<CodeBlockFrame title="docker/Dockerfile">
+<CodeBlockFrame title="Dockerfile">
+
 ```dockerfile
 # Multi-stage build
 FROM node:22-alpine AS builder
@@ -685,17 +723,20 @@ COPY . .
 RUN npm run build
 
 # Production stage
+
 FROM node:22-alpine AS runner
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/convex ./convex
-COPY package*.json ./
+COPY package\*.json ./
 RUN npm ci --production --frozen-lockfile
 
 # Install Convex CLI globally
+
 RUN npm install -g convex@latest
 
 # Environment variables (set via docker run -e)
+
 ENV CONVEX_DEPLOYMENT=""
 ENV KOLOSAL_API_KEY=""
 ENV AUTH_GOOGLE_ID=""
@@ -704,12 +745,14 @@ ENV AUTH_GOOGLE_SECRET=""
 EXPOSE 3210
 CMD ["convex", "dev", "--port", "3210", "--host", "0.0.0.0"]
 ```
+
 </CodeBlockFrame>
 
 ### Caddyfile
 
-<CodeBlockFrame title="docker/Caddyfile">
-```caddyfile
+<CodeBlockFrame title="Caddyfile">
+
+```caddy
 sahin.biz.id {
   # Frontend (static assets)
   handle_path /* {
@@ -740,23 +783,24 @@ sahin.biz.id {
   tls your-email@example.com
 }
 ```
+
 </CodeBlockFrame>
 
 ### GitHub Actions CI/CD
 
 <CodeBlockFrame title=".github/workflows/deploy.yml">
+
 ```yaml
 name: Deploy to VPS
 
 on:
-  push:
-    branches: [main]
+push:
+branches: [main]
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+deploy:
+runs-on: ubuntu-latest
+steps: - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -780,6 +824,7 @@ jobs:
             docker-compose build --no-cache
             docker-compose up -d
 ```
+
 </CodeBlockFrame>
 
 ---
@@ -891,18 +936,22 @@ SAH-in Aja! bridges the gap:
 The difference between a useless AI and a great one is **prompt quality**. We iterated 20+ times:
 
 **Version 1 (Bad)**:
+
 ```
 Analyze kitchen photos for halal issues.
 ```
+
 Result: "The kitchen looks clean. 8/10." ❌
 
 **Version 10 (Good)**:
+
 ```
 You are a halal auditor. Check for 5 criteria: Bahan, Fasilitas, Peralatan, Penyimpanan, Dokumentasi.
 Output JSON: {score, findings[], actionItems[], summaryPoints[], overallMessage}.
 Bahasa: Simple Indonesian, max 5 summary points, use ✅ and ⚠️ emojis.
 Be strict but polite.
 ```
+
 Result: "Dapurnya sudah cukup bersih Bu! Tinggal ganti kecap, insyaallah lulus."
 ✅
 
@@ -956,6 +1005,7 @@ When Kolosal credits run low, switch to cheaper models:
 | MiniMax M2 | 204K | $0.3 / $1.2 | Text (cheapest) |
 
 **Switching logic**:
+
 ```typescript
 const model = credits > 1000 ? KOLOSAL_MODELS.VISION : "qwen/qwen-3-vl-30b";
 ```
@@ -965,6 +1015,7 @@ const model = credits > 1000 ? KOLOSAL_MODELS.VISION : "qwen/qwen-3-vl-30b";
 ## Conclusion: AI for Social Good
 
 SAH-in Aja! proves that AI can solve real, tangible problems for underserved communities. By combining:
+
 - **Vision AI** for facility assessment
 - **Document generation** for compliance
 - **Chatbot** for 24/7 guidance
@@ -972,6 +1023,7 @@ SAH-in Aja! proves that AI can solve real, tangible problems for underserved com
 - **Low-end optimization** for device reality
 
 ...we've created a platform that could help **millions of Indonesian MSMEs** achieve halal certification, unlocking access to:
+
 - **Local markets**: JAKIM, MUI-certified products
 - **Export markets**: Middle East, Malaysia, Brunei (strict halal requirements)
 - **Customer trust**: Halal label = 230M Muslim consumers

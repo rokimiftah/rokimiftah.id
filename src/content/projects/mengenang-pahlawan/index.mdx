@@ -12,6 +12,7 @@ repoURL: "https://github.com/rokimiftah/mengenang-pahlawan"
 **Mengenang Pahlawan** (Remembering Heroes) is an AI-powered educational platform that transforms how Indonesians learn about their national heroes. It combines a comprehensive biographical database, interactive AI-simulated conversations with historical figures, gamified quizzes with daily point caps, and real-time tracking—all wrapped in a modern, responsive interface.
 
 ### Why it matters
+
 - **Educational gamification**: Daily quiz limits (5 per day) with point breakdowns (base points + perfect bonus + first-try bonus) encourage consistent learning without burnout.
 - **AI with guardrails**: OpenAI-powered chat simulates conversations with heroes, but strict relevance checking prevents off-topic discussions—ensuring educational value.
 - **Smart recommendations**: LLM analyzes viewing history, era, and themes to suggest related heroes—keeping users engaged across different periods.
@@ -19,6 +20,7 @@ repoURL: "https://github.com/rokimiftah/mengenang-pahlawan"
 - **Multi-channel engagement**: Resend emails with beautiful React Email templates for OTP verification, password resets, and quiz result summaries.
 
 ### How it works (brief)
+
 1. **Authentication**: Users sign up via GitHub OAuth or email/password with OTP verification. Convex Auth manages sessions and email verification flows.
 2. **Explore heroes**: Browse 200+ heroes filtered by 5 eras (Colonial War, National Movement, Japanese Occupation, Revolution & Old Order, Post-1966) or search by name/aliases.
 3. **Interactive learning**: Each hero has detailed slides (biography summary + key facts), sources, timeline (birth/death), education, legacy, and official recognition details.
@@ -27,6 +29,7 @@ repoURL: "https://github.com/rokimiftah/mengenang-pahlawan"
 6. **Points tracking**: Real-time points badge with tooltip history, detailed modal showing all quiz attempts with breakdowns, and email summaries after each quiz.
 
 ### Stack
+
 - **Frontend**: React 19 + TypeScript, Wouter (routing)
 - **UI**: Mantine 8 (charts, forms, modals, notifications) + Tailwind CSS 4 + Radix UI primitives
 - **Backend**: Convex (serverless functions, real-time queries, HTTP routes, scheduling)
@@ -38,7 +41,9 @@ repoURL: "https://github.com/rokimiftah/mengenang-pahlawan"
 ### Key features deep-dive
 
 #### 1. Smart quiz generation
+
 Quizzes are dynamically built from hero data using a "decoy bank" system:
+
 - **Birth year questions**: Correct year + two nearby years as options
 - **Birthplace questions**: Correct place + two random places from other heroes
 - **Era questions**: Correct era + two other eras from the 5 available
@@ -48,17 +53,22 @@ Quizzes are dynamically built from hero data using a "decoy bank" system:
 Each quiz shuffles questions and options to prevent memorization.
 
 #### 2. AI chat with educational guardrails
+
 Two-stage LLM process ensures relevance:
+
 1. **Judgment phase**: LLM determines if the question is relevant to the hero (biographical questions, historical context, comparisons). Special handling for pronouns ("you/your") and generic biographical questions (spouse, children, education).
 2. **Response phase**: If relevant, LLM generates first-person response clearly labeled as "[Fakta]" (facts from data) and "[Interpretasi]" (interpretive narrative). If irrelevant, politely redirects to hero-related topics.
 
 Example flow:
+
 - User: "Siapa istri kamu?" (Who is your wife?)
 - System: Recognizes pronoun + biographical question → Relevant
 - AI: "Ini simulasi edukatif...\n[Fakta] — [data from biography]\n[Interpretasi] — [first-person narrative about family life]"
 
 #### 3. Gamified points system
+
 Daily cap prevents addiction while encouraging consistency:
+
 - **5 scored quizzes per day** (resets at 00:00 Singapore timezone)
 - **Point breakdown**: Base (10 x correct answers) + Perfect (+10 if all correct) + First-try (+3)
 - **Practice mode**: After daily cap or repeat hero on same day, quizzes still work but award 0 points
@@ -66,14 +76,18 @@ Daily cap prevents addiction while encouraging consistency:
 - **History tracking**: Modal shows all attempts with date, hero, score, points, and practice indicator
 
 #### 4. Real-time architecture
+
 Convex powers instant updates:
+
 - **Optimistic UI**: Points update immediately on quiz completion
 - **Live queries**: Hero list, filters, and detail pages react to database changes
 - **Scheduled actions**: Email sends are queued via `ctx.scheduler.runAfter()` to avoid blocking mutations
 - **Type-safe**: Convex generates TypeScript types from schema for end-to-end safety
 
 #### 5. Multi-era filtering
+
 Heroes are categorized by their primary era of struggle:
+
 - **Perang Kolonial** (Colonial War, pre-1900)
 - **Pergerakan Nasional** (National Movement, 1900-1942)
 - **Pendudukan Jepang** (Japanese Occupation, 1942-1945)
@@ -85,6 +99,7 @@ Era is auto-inferred from birth year during data import but can be manually over
 ### Architecture highlights
 
 #### Database schema (Convex tables)
+
 - **users**: Extended Convex Auth user table with name, avatar storage ID, and email verification timestamp
 - **heroes**: Slug, name, era, portrait URL, biography slides, sources, titles, birth/death, education, legacy, recognition decree, raw JSON
 - **quizAttempts**: User + hero slug + total/correct + timestamp (audit trail)
@@ -93,13 +108,16 @@ Era is auto-inferred from birth year during data import but can be manually over
 - **quizAwards**: User + hero slug + points awarded + breakdown + practice flag + timestamp
 
 #### Authentication flow
+
 1. **Sign up/Sign in**: Email/password or GitHub OAuth
 2. **Email verification**: If email unverified, redirect to `/verify-email?email=...` and send OTP via Resend
 3. **Password reset**: User requests code → OTP sent → redirect to `/reset-password?email=...` → confirm new password
 4. **Route guards**: Auth pages (login/register) redirect to `/pahlawan` if logged in; dashboard pages redirect to `/login` if not authenticated
 
 #### LLM integration patterns
+
 All LLM calls are Convex Actions (server-side only):
+
 - **agent.ts**: `recommendHeroes` (analyze viewing history + hero data → suggest 3 related heroes), `chatAsHero` (simulate conversation with relevance checking)
 - **ai.ts**: `generateForHero` (build quiz questions from biographical data)
 - **llm.ts**: Reusable OpenAI client with `responses.create()` API (platform-agnostic; supports custom base URLs)
@@ -107,6 +125,7 @@ All LLM calls are Convex Actions (server-side only):
 No API keys exposed to client; all requests authenticated via Convex Auth.
 
 ### Why this approach works
+
 - **Structured data + AI flexibility**: Biographical facts come from curated JSON; AI adds conversational layer without hallucination risk.
 - **Daily caps**: Prevent burnout and gaming the system while maintaining engagement.
 - **Email touchpoints**: Reinforce learning via post-quiz summaries sent to inbox.
@@ -114,6 +133,7 @@ No API keys exposed to client; all requests authenticated via Convex Auth.
 - **Mobile-first UI**: Mantine + Tailwind ensures responsive experience on phones/tablets.
 
 ### Future possibilities
+
 - Voice narration of biographies (text-to-speech)
 - Spaced repetition for quiz questions
 - Social features: leaderboards, achievements, hero "collections"
