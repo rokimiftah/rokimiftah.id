@@ -127,7 +127,7 @@ import { sleep } from 'k6';
 
 export const options = {
   vus: 10, // 10 virtual users
-  duration: "30s",
+  duration: "30s"
 };
 
 export default function () {
@@ -148,8 +148,8 @@ export const options = {
     { duration: "5m", target: 100 }, // Stay at 100 virtual users for 5 minutes
     { duration: "2m", target: 200 }, // Ramp-up to 200 virtual users over 2 minutes
     { duration: "5m", target: 200 }, // Stay at 200 virtual users for 5 minutes
-    { duration: "2m", target: 0 }, // Ramp-down to 0 virtual users over 2 minutes
-  ],
+    { duration: "2m", target: 0 } // Ramp-down to 0 virtual users over 2 minutes
+  ]
 };
 
 export default function () {
@@ -168,8 +168,8 @@ export const options = {
   stages: [
     { duration: "1m", target: 50 }, // Ramp-up to 50 virtual users over 1 minute
     { duration: "30s", target: 500 }, // Spike to 500 virtual users for 30 seconds
-    { duration: "1m", target: 50 }, // Ramp-down to 50 virtual users over 1 minute
-  ],
+    { duration: "1m", target: 50 } // Ramp-down to 50 virtual users over 1 minute
+  ]
 };
 
 export default function () {
@@ -188,8 +188,8 @@ export const options = {
   stages: [
     { duration: "5m", target: 100 }, // Ramp-up to 100 virtual users over 5 minutes
     { duration: "2h", target: 100 }, // Stay at 100 virtual users for 2 hours
-    { duration: "5m", target: 0 }, // Ramp-down to 0 virtual users over 5 minutes
-  ],
+    { duration: "5m", target: 0 } // Ramp-down to 0 virtual users over 5 minutes
+  ]
 };
 
 export default function () {

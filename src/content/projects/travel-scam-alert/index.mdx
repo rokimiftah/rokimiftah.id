@@ -85,8 +85,26 @@ Travel Scam Alert aggregates, analyzes, and visualizes scam data at scale:
 
 <CodeBlockFrame title="">
 
-```typescript 
-const REDDIT_KEYWORDS = [ "travel scam", "scammed", "rip off", "timeshare", "taxi", "tour", "fraud", "fake", "warning", "avoid", "pickpocket", "atm", "booking", "visa", "airport", "police", "ticket" ]; 
+```typescript
+const REDDIT_KEYWORDS = [
+  "travel scam",
+  "scammed",
+  "rip off",
+  "timeshare",
+  "taxi",
+  "tour",
+  "fraud",
+  "fake",
+  "warning",
+  "avoid",
+  "pickpocket",
+  "atm",
+  "booking",
+  "visa",
+  "airport",
+  "police",
+  "ticket"
+];
 ```
 
 </CodeBlockFrame>
@@ -119,7 +137,7 @@ export const fetchRedditPosts = internalAction({
 
     // Handle rate limiting (429)
     if (response.status === 429) {
-      await new Promise(resolve => setTimeout(resolve, 60000));
+      await new Promise((resolve) => setTimeout(resolve, 60000));
       // Retry with smaller limit
     }
 
@@ -136,12 +154,11 @@ export const fetchRedditPosts = internalAction({
           author: post.author,
           created_utc: post.created_utc,
           ups: post.ups,
-          permalink: post.permalink,
+          permalink: post.permalink
         }
       });
     }
-
-}
+  }
 });
 ```
 
@@ -159,20 +176,20 @@ Each raw Reddit post is analyzed by GPT-4o-mini to extract structured data:
 
 ```typescript
 interface ScamAnalysis {
-  isScamStory: boolean;            // Filter out non-scam posts
-  confidence: number;              // 0-1 (AI confidence)
-  country: string;                 // Primary location
-  city?: string;                   // City if mentioned
-  specificLocation?: string;       // Landmark (e.g., "Eiffel Tower")
-  scamType: ScamType;             // taxi, accommodation, police, etc.
-  scamMethods: string[];          // Specific tactics used
-  targetDemographics: string[];   // Who was targeted
-  moneyLost?: number;             // Amount lost (if mentioned)
-  currency?: string;              // USD, EUR, etc.
-  warningSignals: string[];       // Red flags to watch for
-  preventionTips: string[];       // How to avoid this scam
-  resolution?: string;            // Outcome of the story
-  summary: string;                // AI-generated summary
+  isScamStory: boolean; // Filter out non-scam posts
+  confidence: number; // 0-1 (AI confidence)
+  country: string; // Primary location
+  city?: string; // City if mentioned
+  specificLocation?: string; // Landmark (e.g., "Eiffel Tower")
+  scamType: ScamType; // taxi, accommodation, police, etc.
+  scamMethods: string[]; // Specific tactics used
+  targetDemographics: string[]; // Who was targeted
+  moneyLost?: number; // Amount lost (if mentioned)
+  currency?: string; // USD, EUR, etc.
+  warningSignals: string[]; // Red flags to watch for
+  preventionTips: string[]; // How to avoid this scam
+  resolution?: string; // Outcome of the story
+  summary: string; // AI-generated summary
 }
 ```
 
@@ -279,9 +296,7 @@ export const geocodeAndNormalize = action({
     const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
 
     // Build query: prioritize country context
-    const query = args.country
-      ? `${args.location}, ${args.country}`
-      : args.location;
+    const query = args.country ? `${args.location}, ${args.country}` : args.location;
 
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&types=country,place&limit=1`;
 
@@ -293,8 +308,8 @@ export const geocodeAndNormalize = action({
       const [lng, lat] = feature.center;
 
       // Extract canonical country/city names from Mapbox
-      const country = feature.context?.find((c: any) => c.id.startsWith('country'))?.text;
-      const city = feature.context?.find((c: any) => c.id.startsWith('place'))?.text || feature.text;
+      const country = feature.context?.find((c: any) => c.id.startsWith("country"))?.text;
+      const city = feature.context?.find((c: any) => c.id.startsWith("place"))?.text || feature.text;
 
       return {
         success: true,
@@ -305,8 +320,7 @@ export const geocodeAndNormalize = action({
     }
 
     return { success: false };
-
-}
+  }
 });
 ```
 
@@ -318,16 +332,16 @@ export const geocodeAndNormalize = action({
 
 ```typescript
 const countryAliasMap: Record<string, string> = {
-  "Turkey": "Türkiye",
-  "Turkiye": "Türkiye",
-  "China": "People's Republic of China",
-  "Korea": "South Korea",
-  "USA": "United States",
-  "US": "United States",
-  "UK": "United Kingdom",
-  "Britain": "United Kingdom",
-  "UAE": "United Arab Emirates",
-  "Holland": "Netherlands",
+  Turkey: "Türkiye",
+  Turkiye: "Türkiye",
+  China: "People's Republic of China",
+  Korea: "South Korea",
+  USA: "United States",
+  US: "United States",
+  UK: "United Kingdom",
+  Britain: "United Kingdom",
+  UAE: "United Arab Emirates",
+  Holland: "Netherlands"
   // ... 20+ more aliases
 };
 ```
@@ -345,18 +359,21 @@ locationStats: defineTable({
   country: v.string(),
   city: v.optional(v.string()),
   totalScams: v.number(),
-  topScamTypes: v.array(v.object({
-    type: scamTypes,
-    count: v.number()
-  })),
+  topScamTypes: v.array(
+    v.object({
+      type: scamTypes,
+      count: v.number()
+    })
+  ),
   averageLoss: v.optional(v.number()),
   lastUpdated: v.number(),
-  coordinates: v.optional(v.object({
-    lat: v.number(),
-    lng: v.number()
-  }))
-})
-.index("by_country", ["country"])
+  coordinates: v.optional(
+    v.object({
+      lat: v.number(),
+      lng: v.number()
+    })
+  )
+}).index("by_country", ["country"]);
 ```
 
 </CodeBlockFrame>
@@ -468,6 +485,7 @@ pointRadius={d => Math.min(d.reports \* 0.05, 0.5)}
 </CodeBlockFrame>
 
 **Performance optimizations**:
+
 - Lazy load globe component (React.lazy)
 - Memoize country data calculations
 - Throttle click handlers
@@ -476,6 +494,7 @@ pointRadius={d => Math.min(d.reports \* 0.05, 0.5)}
 ### 6. Voice Assistant Integration (VAPI)
 
 **Natural language queries** about any country:
+
 - "What scams are reported in Thailand?"
 - "Tell me about Singapore travel scams"
 - "Is it safe to visit Turkey?"
@@ -494,23 +513,25 @@ Database query → Format response → VAPI speaks answer
 <CodeBlockFrame title="convex/vapiTools.ts">
 
 ```typescript
-const tools = [{
-  type: "function",
-  function: {
-    name: "queryScamsByLocation",
-    description: "Get scam data for a specific country",
-    parameters: {
-      type: "object",
-      properties: {
-        country: {
-          type: "string",
-          description: "Country name (e.g., 'Singapore', 'Thailand')"
-        }
-      },
-      required: ["country"]
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "queryScamsByLocation",
+      description: "Get scam data for a specific country",
+      parameters: {
+        type: "object",
+        properties: {
+          country: {
+            type: "string",
+            description: "Country name (e.g., 'Singapore', 'Thailand')"
+          }
+        },
+        required: ["country"]
+      }
     }
   }
-}];
+];
 ```
 
 </CodeBlockFrame>
@@ -524,9 +545,9 @@ export const handleToolCall = httpAction(async (ctx, request) => {
   const body = await request.json();
   const toolCall = body.message?.toolCalls?.[0];
 
-if (toolCall.function.name === "queryScamsByLocation") {
-const args = JSON.parse(toolCall.function.arguments);
-let country = args.country;
+  if (toolCall.function.name === "queryScamsByLocation") {
+    const args = JSON.parse(toolCall.function.arguments);
+    let country = args.country;
 
     // Map aliases
     const mappedCountry = countryAliasMap[country] || country;
@@ -537,14 +558,17 @@ let country = args.country;
     });
 
     // Return formatted response
-    return new Response(JSON.stringify({
-      results: [{
-        toolCallId: toolCall.id,
-        result: scamData.message
-      }]
-    }));
-
-}
+    return new Response(
+      JSON.stringify({
+        results: [
+          {
+            toolCallId: toolCall.id,
+            result: scamData.message
+          }
+        ]
+      })
+    );
+  }
 });
 ```
 
@@ -592,13 +616,15 @@ scamStories: defineTable({
   country: v.string(),
   city: v.optional(v.string()),
   specificLocation: v.optional(v.string()),
-  coordinates: v.optional(v.object({
-    lat: v.number(),
-    lng: v.number()
-  })),
+  coordinates: v.optional(
+    v.object({
+      lat: v.number(),
+      lng: v.number()
+    })
+  ),
 
   // Scam categorization
-  scamType: scamTypes,              // 15 predefined types
+  scamType: scamTypes, // 15 predefined types
   scamMethods: v.array(v.string()),
   targetDemographics: v.array(v.string()),
 
@@ -619,10 +645,10 @@ scamStories: defineTable({
   isProcessed: v.boolean(),
   processingAttempts: v.optional(v.number())
 })
-.index("by_country", ["country"])
-.index("by_type", ["scamType"])
-.index("by_processed", ["isProcessed"])
-.index("by_processed_postDate", ["isProcessed", "postDate"])
+  .index("by_country", ["country"])
+  .index("by_type", ["scamType"])
+  .index("by_processed", ["isProcessed"])
+  .index("by_processed_postDate", ["isProcessed", "postDate"]);
 ```
 
 </CodeBlockFrame>
@@ -636,18 +662,21 @@ locationStats: defineTable({
   country: v.string(),
   city: v.optional(v.string()),
   totalScams: v.number(),
-  topScamTypes: v.array(v.object({
-    type: scamTypes,
-    count: v.number()
-  })),
+  topScamTypes: v.array(
+    v.object({
+      type: scamTypes,
+      count: v.number()
+    })
+  ),
   averageLoss: v.optional(v.number()),
   lastUpdated: v.number(),
-  coordinates: v.optional(v.object({
-    lat: v.number(),
-    lng: v.number()
-  }))
-})
-.index("by_country", ["country"])
+  coordinates: v.optional(
+    v.object({
+      lat: v.number(),
+      lng: v.number()
+    })
+  )
+}).index("by_country", ["country"]);
 ```
 
 </CodeBlockFrame>
@@ -667,8 +696,8 @@ scamComments: defineTable({
   containsAdvice: v.boolean(),
   isAnalyzedForScam: v.optional(v.boolean())
 })
-.index("by_story", ["storyId"])
-.index("by_analyzed", ["isAnalyzedForScam"])
+  .index("by_story", ["storyId"])
+  .index("by_analyzed", ["isAnalyzedForScam"]);
 ```
 
 </CodeBlockFrame>
@@ -719,33 +748,29 @@ scamComments: defineTable({
 import { useVapi } from "@vapi-ai/web";
 
 function VoiceAssistantIntegrated() {
-const { start, stop, isSessionActive, messages } = useVapi({
-publicKey: PUBLIC_VAPI_PUBLIC_KEY,
-assistant: {
-model: { provider: "openai", model: "gpt-4o" },
-voice: { provider: "11labs", voiceId: "paula" },
-tools: [queryScamsByLocationTool],
-serverUrl: "https://scam.web.id/api/http/vapi/tool-call"
-}
-});
+  const { start, stop, isSessionActive, messages } = useVapi({
+    publicKey: PUBLIC_VAPI_PUBLIC_KEY,
+    assistant: {
+      model: { provider: "openai", model: "gpt-4o" },
+      voice: { provider: "11labs", voiceId: "paula" },
+      tools: [queryScamsByLocationTool],
+      serverUrl: "https://scam.web.id/api/http/vapi/tool-call"
+    }
+  });
 
-return (
-
-<div>
-<button onClick={isSessionActive ? stop : start}>
-{isSessionActive ? "Stop" : "Ask about scams"}
-</button>
+  return (
+    <div>
+      <button onClick={isSessionActive ? stop : start}>{isSessionActive ? "Stop" : "Ask about scams"}</button>
 
       <div className="transcript">
-        {messages.map(msg => (
+        {messages.map((msg) => (
           <div key={msg.id} className={msg.role}>
             {msg.content}
           </div>
         ))}
       </div>
     </div>
-
-);
+  );
 }
 ```
 

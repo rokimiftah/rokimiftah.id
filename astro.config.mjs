@@ -7,26 +7,26 @@ import { defineConfig } from "astro/config";
 
 export default defineConfig({
   devToolbar: {
-    enabled: false,
+    enabled: false
   },
 
   integrations: [
     mdx(),
     sitemap({
-      lastmod: new Date(),
-    }),
+      lastmod: new Date()
+    })
   ],
 
   markdown: {
     shikiConfig: {
       theme: "dark-plus",
-      wrap: false,
-    },
+      wrap: false
+    }
   },
 
   server: {
     host: "localhost",
-    port: 3000,
+    port: 3000
   },
 
   site: "https://rokimiftah.id",
@@ -36,7 +36,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: ["dev.rokimiftah.id"],
-    },
-  },
+      allowedHosts: ["dev.rokimiftah.id"]
+    }
+  }
 });

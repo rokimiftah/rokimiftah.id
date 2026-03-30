@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 
   return projects.map((project: CollectionEntry<"projects">) => ({
     params: { slug: project.id },
-    props: project,
+    props: project
   }));
 }
 

@@ -86,10 +86,10 @@ organizations: defineTable({
   auth0OrgIdProd: v.optional(v.string()),
   auth0OrgIdDev: v.optional(v.string()),
   shipEngineConnected: v.boolean(),
-  onboardingCompleted: v.boolean(),
+  onboardingCompleted: v.boolean()
 })
-.index("by_slug", ["slug"])
-.index("by_auth0OrgId", ["auth0OrgId"])
+  .index("by_slug", ["slug"])
+  .index("by_auth0OrgId", ["auth0OrgId"]);
 ```
 
 </CodeBlockFrame>
@@ -113,30 +113,28 @@ Three roles with distinct permissions and UI surfaces:
 <CodeBlockFrame title="convex/auth.ts">
 
 ```typescript
-export async function requireRole(
-  ctx: QueryCtx | MutationCtx,
-  orgId: Id<"organizations">,
-  allowedRoles: Role[]
-) {
+export async function requireRole(ctx: QueryCtx | MutationCtx, orgId: Id<"organizations">, allowedRoles: Role[]) {
   const roles = await getUserRoles(ctx);
   const userOrgId = await getUserOrgId(ctx);
 
-if (userOrgId !== orgId) {
-throw new Error("Access denied: Wrong organization");
-}
+  if (userOrgId !== orgId) {
+    throw new Error("Access denied: Wrong organization");
+  }
 
-if (!roles.some(r => allowedRoles.includes(r))) {
-throw new Error(`Access denied: Requires role ${allowedRoles.join(" or ")}`);
-}
+  if (!roles.some((r) => allowedRoles.includes(r))) {
+    throw new Error(`Access denied: Requires role ${allowedRoles.join(" or ")}`);
+  }
 }
 ```
 
 </CodeBlockFrame>
 
 ### 3. Secure Staff Onboarding (Auth0 Management API)
+
 Owner invites staff via email without ever knowing their passwords:
 
 **Flow**:
+
 1. Owner enters staff email + role in UI
 2. Convex Action calls Auth0 Management API
 3. Creates user, assigns to Organization + Role
@@ -153,7 +151,7 @@ export const inviteStaff = action({
   args: {
     orgId: v.id("organizations"),
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("packer")),
+    role: v.union(v.literal("admin"), v.literal("packer"))
   },
   handler: async (ctx, args) => {
     await requireRole(ctx, args.orgId, ["owner"]);
@@ -170,7 +168,10 @@ export const inviteStaff = action({
 
     // Store invite record
     await ctx.runMutation(api.invites.create, {
-      orgId, email, role, ticketUrl: ticket.url
+      orgId,
+      email,
+      role,
+      ticketUrl: ticket.url
     });
   }
 });
@@ -222,10 +223,9 @@ export const buyLabel = internalAction({
       orderId,
       trackingNumber: label.tracking_number,
       labelUrl: label.label_download.pdf,
-      shippingCost: label.shipment_cost.amount,
+      shippingCost: label.shipment_cost.amount
     });
-
-}
+  }
 });
 ```
 
@@ -238,11 +238,13 @@ export const buyLabel = internalAction({
 WhatThePack implements six AI-powered workflows using OpenAI (platform-provided):
 
 ### 1. Shipping Agent (Zero-Trust Label Purchase)
+
 - **Trigger**: VAPI voice command from packer
 - **Flow**: Retrieve Org Metadata → Call ShipEngine → Update order
 - **Security**: API key never exposed to packer or client
 
 ### 2. RAG Agent (Role-Aware Q&A)
+
 - **Principle**: Filter data by role BEFORE sending to LLM
 - **Owner prompt**: "What's my profit this month?" → Returns full financial analysis
 - **Packer prompt**: "What's the profit?" → Returns "Access denied"
@@ -265,24 +267,24 @@ export const answerQuery = query({
       // Full access: products with COGS, orders with profit
       contextData = await ctx.db
         .query("products")
-        .withIndex("by_orgId", q => q.eq("orgId", orgId))
+        .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
         .collect();
       // Include financial fields
     } else if (role[0] === "admin") {
       // Limited: products without COGS, orders without profit
       contextData = await ctx.db
         .query("products")
-        .withIndex("by_orgId", q => q.eq("orgId", orgId))
+        .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
         .collect()
-        .map(p => ({ sku: p.sku, name: p.name, stockQuantity: p.stockQuantity }));
+        .map((p) => ({ sku: p.sku, name: p.name, stockQuantity: p.stockQuantity }));
       // Exclude financial fields
     } else if (role[0] === "packer") {
       // Minimal: only SKU, name, location, SOP
       contextData = await ctx.db
         .query("products")
-        .withIndex("by_orgId", q => q.eq("orgId", orgId))
+        .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
         .collect()
-        .map(p => ({ sku: p.sku, name: p.name, location: p.warehouseLocation, sop: p.sop_packing }));
+        .map((p) => ({ sku: p.sku, name: p.name, location: p.warehouseLocation, sop: p.sop_packing }));
     }
 
     // Send filtered context to LLM
@@ -361,8 +363,12 @@ export const VAPI_TOOLS = {
       required: ["sku"]
     }
   },
-  check_stock: { /* ... */ },
-  get_packing_instructions: { /* ... */ }
+  check_stock: {
+    /* ... */
+  },
+  get_packing_instructions: {
+    /* ... */
+  }
 };
 ```
 
@@ -391,27 +397,27 @@ http.route({
 
 // convex/vapi_node.ts
 export const handleVapiWebhook = httpAction(async (ctx, request) => {
-// Verify VAPI signature
-const signature = request.headers.get("x-vapi-signature");
-if (!verifyVapiSignature(signature, body)) {
-return new Response("Invalid signature", { status: 401 });
-}
+  // Verify VAPI signature
+  const signature = request.headers.get("x-vapi-signature");
+  if (!verifyVapiSignature(signature, body)) {
+    return new Response("Invalid signature", { status: 401 });
+  }
 
-// Extract intent and payload
-const { intent, orgId, payload } = await request.json();
+  // Extract intent and payload
+  const { intent, orgId, payload } = await request.json();
 
-// Enforce RBAC
-await requireRole(ctx, orgId, ["packer"]);
+  // Enforce RBAC
+  await requireRole(ctx, orgId, ["packer"]);
 
-// Route to appropriate agent
-switch (intent) {
-case "get_next_order":
-return await getNextOrderForPacking(ctx, orgId);
-case "complete_order":
-return await completeOrder(ctx, orgId, payload);
-case "report_stockout":
-return await reportStockout(ctx, orgId, payload);
-}
+  // Route to appropriate agent
+  switch (intent) {
+    case "get_next_order":
+      return await getNextOrderForPacking(ctx, orgId);
+    case "complete_order":
+      return await completeOrder(ctx, orgId, payload);
+    case "report_stockout":
+      return await reportStockout(ctx, orgId, payload);
+  }
 });
 ```
 
@@ -432,37 +438,40 @@ products: defineTable({
   orgId: v.id("organizations"),
   sku: v.string(),
   name: v.string(),
-  costOfGoods: v.number(),        // Owner-only
-  sellPrice: v.number(),          // Owner-only
-  profitMargin: v.number(),       // Owner-only
+  costOfGoods: v.number(), // Owner-only
+  sellPrice: v.number(), // Owner-only
+  profitMargin: v.number(), // Owner-only
   stockQuantity: v.number(),
-  warehouseLocation: v.string(),  // Packer-visible
-  sop_packing: v.optional(v.string()), // Packer-visible
+  warehouseLocation: v.string(), // Packer-visible
+  sop_packing: v.optional(v.string()) // Packer-visible
 })
-.index("by_orgId", ["orgId"])
-.index("by_org_sku", ["orgId", "sku"])
+  .index("by_orgId", ["orgId"])
+  .index("by_org_sku", ["orgId", "sku"]);
 
 orders: defineTable({
   orgId: v.id("organizations"),
   orderNumber: v.string(),
   status: orderStatus, // pending, paid, processing, shipped, delivered, cancelled
-  items: v.array(v.object({
-    productId: v.id("products"),
-    sku: v.string(),
-    quantity: v.number(),
-    unitPrice: v.number(),
-    unitCost: v.number()
-  })),
-  totalCost: v.number(),    // Owner-only
-  totalProfit: v.number(),  // Owner-only
+  items: v.array(
+    v.object({
+      productId: v.id("products"),
+      sku: v.string(),
+      quantity: v.number(),
+      unitPrice: v.number(),
+      unitCost: v.number()
+    })
+  ),
+  totalCost: v.number(), // Owner-only
+  totalProfit: v.number(), // Owner-only
   trackingNumber: v.optional(v.string()),
   createdBy: v.id("users"),
-  packedBy: v.optional(v.id("users")),
+  packedBy: v.optional(v.id("users"))
 })
-.index("by_org_status", ["orgId", "status"])
-.index("by_org_created", ["orgId", "createdAt"])
+  .index("by_org_status", ["orgId", "status"])
+  .index("by_org_created", ["orgId", "createdAt"]);
 
-movements: defineTable({ // Audit trail
+movements: defineTable({
+  // Audit trail
   orgId: v.id("organizations"),
   productId: v.id("products"),
   type: v.union(
@@ -474,10 +483,10 @@ movements: defineTable({ // Audit trail
   quantityBefore: v.number(),
   quantityChange: v.number(),
   quantityAfter: v.number(),
-  userId: v.id("users"),
+  userId: v.id("users")
 })
-.index("by_orgId", ["orgId"])
-.index("by_product", ["productId"])
+  .index("by_orgId", ["orgId"])
+  .index("by_product", ["productId"]);
 ```
 
 </CodeBlockFrame>
@@ -500,19 +509,17 @@ export const list = query({
 
     return ctx.db
       .query("orders")
-      .withIndex("by_org_status", q =>
-        q.eq("orgId", args.orgId).eq("status", args.status)
-      )
+      .withIndex("by_org_status", (q) => q.eq("orgId", args.orgId).eq("status", args.status))
       .order("desc")
       .collect();
-
-}
+  }
 });
 ```
 
 </CodeBlockFrame>
 
 ### HTTP Routes
+
 - `POST /provision`: Auth0 post-registration webhook → Create organization
 - `POST /vapi`: VAPI tool calls → Route to agents
 - `GET /health`: Health check

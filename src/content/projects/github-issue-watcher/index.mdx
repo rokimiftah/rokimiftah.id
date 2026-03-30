@@ -151,7 +151,7 @@ export const fetchAllIssues = action({
       const matched = issues.filter(
         (issue) =>
           issue.title.toLowerCase().includes(args.keyword.toLowerCase()) ||
-          issue.body?.toLowerCase().includes(args.keyword.toLowerCase()),
+          issue.body?.toLowerCase().includes(args.keyword.toLowerCase())
       );
 
       allIssues.push(...matched);
@@ -160,7 +160,7 @@ export const fetchAllIssues = action({
     } while (cursor);
 
     return allIssues;
-  },
+  }
 });
 ```
 
@@ -231,10 +231,10 @@ async function safeAnalyzeIssue(openai, prompt, model, issue) {
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: prompt }
         ],
         temperature: 0.3, // Lower temp for consistency
-        max_tokens: 300,
+        max_tokens: 300
       });
 
       const text = response.choices[0].message.content;
@@ -281,7 +281,7 @@ export const processWorkBatch = internalAction({
     // Acquire distributed lock (prevent concurrent workers on same report)
     const locked = await ctx.runMutation(api.llmWorker.acquireLock, {
       name: "llmWorker",
-      ttlMs: 60000, // 60s lease
+      ttlMs: 60000 // 60s lease
     });
 
     if (!locked) return { processed: 0 };
@@ -289,12 +289,12 @@ export const processWorkBatch = internalAction({
     try {
       // Select tasks from queue (priority + FIFO)
       const tasks = await ctx.runQuery(api.queue.selectQueuedTasks, {
-        limit: args.batchSize,
+        limit: args.batchSize
       });
 
       // Mark as running
       await ctx.runMutation(api.llmWorker.markTasksRunning, {
-        taskIds: tasks.map((t) => t._id),
+        taskIds: tasks.map((t) => t._id)
       });
 
       // Process concurrently (max 3 to avoid rate limits)
@@ -307,10 +307,10 @@ export const processWorkBatch = internalAction({
     } finally {
       // Release lock
       await ctx.runMutation(api.llmWorker.releaseLock, {
-        name: "llmWorker",
+        name: "llmWorker"
       });
     }
-  },
+  }
 });
 ```
 
@@ -343,7 +343,7 @@ export const checkRateLimit = mutation({
   args: {
     userId: v.id("users"),
     requestCost: v.number(), // Number of requests
-    tokenCost: v.number(), // Estimated tokens
+    tokenCost: v.number() // Estimated tokens
   },
   handler: async (ctx, args) => {
     const bucket = `user:${args.userId}`;
@@ -361,7 +361,7 @@ export const checkRateLimit = mutation({
         bucket,
         requests: 0,
         tokens: 0,
-        updatedAt: now,
+        updatedAt: now
       });
     }
 
@@ -370,7 +370,7 @@ export const checkRateLimit = mutation({
       await ctx.db.patch(limit._id, {
         requests: 0,
         tokens: 0,
-        updatedAt: now,
+        updatedAt: now
       });
       limit = { ...limit, requests: 0, tokens: 0 };
     }
@@ -391,11 +391,11 @@ export const checkRateLimit = mutation({
     await ctx.db.patch(limit._id, {
       requests: limit.requests + args.requestCost,
       tokens: limit.tokens + args.tokenCost,
-      updatedAt: now,
+      updatedAt: now
     });
 
     return { allowed: true };
-  },
+  }
 });
 ```
 
@@ -422,7 +422,7 @@ export function IssueReportEmail({
   repoUrl,
   keyword,
   issues,
-  isPartial,
+  isPartial
 }: {
   repoUrl: string;
   keyword: string;
@@ -488,7 +488,7 @@ export function IssueReportEmail({
 export const sendProgressiveEmail = mutation({
   args: {
     reportId: v.id("reports"),
-    currentIssueCount: v.number(),
+    currentIssueCount: v.number()
   },
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
@@ -498,16 +498,16 @@ export const sendProgressiveEmail = mutation({
     if (args.currentIssueCount % BATCH_SIZE === 0) {
       await ctx.scheduler.runAfter(0, internal.resend.sendIssueReport, {
         reportId: args.reportId,
-        isPartial: true,
+        isPartial: true
       });
 
       // Update last email sent timestamp
       await ctx.db.patch(args.reportId, {
         lastPartialEmailAt: Date.now(),
-        emailsSent: (report.emailsSent || 0) + 1,
+        emailsSent: (report.emailsSent || 0) + 1
       });
     }
-  },
+  }
 });
 ```
 
@@ -540,8 +540,8 @@ reports: defineTable({
       relevanceScore: v.number(), // 0-100 (AI-scored)
       explanation: v.string(), // AI reasoning
       matchedTerms: v.optional(v.array(v.string())),
-      evidence: v.optional(v.array(v.string())),
-    }),
+      evidence: v.optional(v.array(v.string()))
+    })
   ),
   createdAt: v.number(),
   lastFetched: v.number(),
@@ -549,7 +549,7 @@ reports: defineTable({
   isComplete: v.boolean(),
   isCanceled: v.optional(v.boolean()),
   emailsSent: v.optional(v.number()),
-  lastPartialEmailAt: v.optional(v.number()),
+  lastPartialEmailAt: v.optional(v.number())
 })
   .index("userEmail", ["userEmail"])
   .index("userId", ["userId"])
@@ -573,7 +573,7 @@ analysis_tasks: defineTable({
     title: v.string(),
     body: v.string(),
     labels: v.array(v.string()),
-    createdAt: v.string(),
+    createdAt: v.string()
   }),
   estTokens: v.number(), // Estimated token cost
   status: v.string(), // queued, running, completed, failed
@@ -581,7 +581,7 @@ analysis_tasks: defineTable({
   attempts: v.number(), // Retry counter
   error: v.optional(v.string()),
   createdAt: v.number(),
-  updatedAt: v.number(),
+  updatedAt: v.number()
 })
   .index("status_priority", ["status", "priority"])
   .index("report_status", ["reportId", "status"])
@@ -599,7 +599,7 @@ rate_limits: defineTable({
   bucket: v.string(), // "user:userId"
   requests: v.number(),
   tokens: v.number(),
-  updatedAt: v.number(),
+  updatedAt: v.number()
 }).index("bucket", ["bucket"]);
 ```
 
@@ -613,7 +613,7 @@ rate_limits: defineTable({
 locks: defineTable({
   name: v.string(), // Lock identifier
   leaseExpiresAt: v.number(), // Expiry timestamp
-  owner: v.optional(v.string()), // Worker ID
+  owner: v.optional(v.string()) // Worker ID
 }).index("name", ["name"]);
 ```
 

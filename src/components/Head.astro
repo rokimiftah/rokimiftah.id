@@ -19,14 +19,14 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
   extend={{
     meta: [
       { name: "viewport", content: "width=device-width,initial-scale=1" },
-      { name: "generator", content: `${Astro.generator}` },
+      { name: "generator", content: `${Astro.generator}` }
     ],
     link: [
       { rel: "preconnect", href: "https://cdn.rokimiftah.id", crossorigin: "" },
       { rel: "dns-prefetch", href: "//cdn.rokimiftah.id" },
       { rel: "icon", href: "https://cdn.rokimiftah.id/favicon.ico" },
-      { rel: "sitemap", href: "/sitemap-index.xml" },
-    ],
+      { rel: "sitemap", href: "/sitemap-index.xml" }
+    ]
   }}
   titleDefault={SITE.TITLE}
   titleTemplate={titleTemplate}
@@ -46,7 +46,7 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE.TITLE,
-    url: Astro.site,
+    url: Astro.site
   })}
 />
 
@@ -109,7 +109,7 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
     event.preventDefault();
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: "smooth"
     });
   }
 

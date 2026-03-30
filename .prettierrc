@@ -14,5 +14,7 @@
 
   "printWidth": 130,
 
+  "trailingComma": "none",
+
   "useTabs": false
 }
