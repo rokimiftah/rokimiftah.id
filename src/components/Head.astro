@@ -129,7 +129,57 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
         if (!img.hasAttribute("loading")) img.loading = "lazy";
         if (!img.hasAttribute("decoding")) img.decoding = "async";
         if (!img.hasAttribute("fetchpriority")) img.fetchPriority = "low";
+        img.classList.add("img-zoomable");
       }
+    });
+
+    // Image zoom lightbox
+    let zoomOverlay: HTMLDivElement | null = null;
+    let zoomImg: HTMLImageElement | null = null;
+
+    function preventScroll(e: Event) {
+      e.preventDefault();
+    }
+
+    function createOverlay() {
+      if (zoomOverlay) return;
+      zoomOverlay = document.createElement("div");
+      zoomOverlay.className = "img-zoom-overlay";
+      zoomImg = document.createElement("img");
+      zoomImg.className = "img-zoom-img";
+      zoomOverlay.appendChild(zoomImg);
+      document.body.appendChild(zoomOverlay);
+
+      zoomOverlay.addEventListener("click", closeZoom);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeZoom();
+      });
+    }
+
+    function openZoom(src: string, alt: string) {
+      createOverlay();
+      if (!zoomOverlay || !zoomImg) return;
+      zoomImg.src = src;
+      zoomImg.alt = alt;
+      zoomOverlay.classList.add("active");
+      document.addEventListener("wheel", preventScroll, { passive: false });
+      document.addEventListener("touchmove", preventScroll, { passive: false });
+    }
+
+    function closeZoom() {
+      if (!zoomOverlay) return;
+      zoomOverlay.classList.remove("active");
+      document.removeEventListener("wheel", preventScroll);
+      document.removeEventListener("touchmove", preventScroll);
+    }
+
+    document.querySelectorAll("article .img-zoomable").forEach((img) => {
+      img.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (img instanceof HTMLImageElement) {
+          openZoom(img.src, img.alt);
+        }
+      });
     });
 
     onScroll();

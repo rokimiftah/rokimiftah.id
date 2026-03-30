@@ -99,6 +99,37 @@ article {
   @apply prose prose-headings:font-onest prose-headings:font-bold prose-headings:text-[#000000] prose-p:font-sans prose-p:text-[#000000] prose-img:mx-auto prose-img:my-auto prose-img:rounded-lg max-w-full;
 }
 
+article .img-zoomable {
+  cursor: zoom-in;
+  transition: opacity 0.2s ease;
+}
+
+article .img-zoomable:hover {
+  opacity: 0.85;
+}
+
+.img-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.img-zoom-overlay.active {
+  display: flex;
+}
+
+.img-zoom-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
 @layer utilities {
   article a {
     @apply rounded font-sans text-[#46433b]! not-italic underline underline-offset-2 transition-colors duration-200 ease-in-out;
@@ -115,7 +146,7 @@ article {
 }
 
 .copy-code {
-  @apply absolute top-[7px] right-2.5 cursor-pointer text-xs;
+  @apply absolute top-1.75 right-2.5 cursor-pointer text-xs;
 }
 
 /* Table styles */
