@@ -5,6 +5,7 @@ date: "July 01 2025"
 draft: false
 ---
 
+import CodeBlockFrame from "@components/CodeBlockFrame.astro";
 import TLDR from "@components/TLDR.astro";
 
 In our digital landscape, seamless user experiences reign supreme. A sluggish or unresponsive app erodes customer satisfaction swiftly. Integrating k6 load testing into your development cycle helps proactively identify and rectify performance bottlenecks, ensuring your system handles real-world demands without compromising functionality or usability.
@@ -38,13 +39,21 @@ The first crucial move is making sure your [web app](https://rokimiftah.id) is p
 
 Make sure we have installed k6 and Node.js properly by using command:
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```
 sh k6 --version
 ```
 
-```sh title: sh
+</CodeBlockFrame>
+
+<CodeBlockFrame title="sh">
+
+```sh
 node --version
 ```
+
+</CodeBlockFrame>
 
 ### Step 3: Writing Your First k6 Test Script
 
@@ -59,39 +68,61 @@ Before you start scripting, let's set up a dedicated project folder and initiali
 
 1. Create a new folder for your k6 project:
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```sh
 mkdir k6-load-tests && cd k6-load-tests
 ```
 
+</CodeBlockFrame>
+
 2. Initialize a new Node.js project:
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```sh
 npm init -y
 ```
 
+</CodeBlockFrame>
+
 3. Open the `package.json` file and change the `"type"` field to `"module"`:
 
-```json title: package.json
+<CodeBlockFrame title="package.json">
+
+```json
 {
   "type": "module"
 }
 ```
 
+</CodeBlockFrame>
+
 4. Install the required k6 packages:
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```sh
 npm install k6 && npm install -D @types/k6
 ```
 
+</CodeBlockFrame>
+
 5. Then create 4 files:
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```sh
 touch minimal-test.js stress-test.js spike-test.js soak-test.js
 ```
 
+</CodeBlockFrame>
+
 Having formulated your comprehensive testing approach, the next phase entails transcribing your strategy into executable scripts. The k6 tool leverages JavaScript (or its superset, TypeScript) as the programming language for crafting test scripts, thereby offering accessibility to developers well-versed in these widely adopted languages. To illustrate, let us consider an exemplary script that emulates a straightforward user interaction scenario on my website:
 
-```js title: minimal-test.js
+<CodeBlockFrame title="minimal-test.js">
+
+```js
 import http from "k6/http";
 import { sleep } from "k6";
 
@@ -106,7 +137,11 @@ export default function () {
 }
 ```
 
-```js title: stress-test.js
+</CodeBlockFrame>
+
+<CodeBlockFrame title="stress-test.js">
+
+```js
 import http from "k6/http";
 import { sleep } from "k6";
 
@@ -126,7 +161,11 @@ export default function () {
 }
 ```
 
-```js title: spike-test.js
+</CodeBlockFrame>
+
+<CodeBlockFrame title="spike-test.js">
+
+```js
 import http from "k6/http";
 import { sleep } from "k6";
 
@@ -144,7 +183,11 @@ export default function () {
 }
 ```
 
-```js title: soak-test.js
+</CodeBlockFrame>
+
+<CodeBlockFrame title="soak-test.js">
+
+```js
 import http from "k6/http";
 import { sleep } from "k6";
 
@@ -161,6 +204,8 @@ export default function () {
   sleep(1);
 }
 ```
+
+</CodeBlockFrame>
 
 <br />
 
@@ -213,9 +258,13 @@ Once you have crafted your k6 test scripts, the next crucial phase involves exec
    - Run k6 using the command `k6 run [script_file_name]`.
    - Throughout the duration of the test run, k6 will continuously present real-time data and metrics, including the count of simulated virtual users, the rate at which requests are being processed, the observed response durations, and any other pertinent statistical information relevant to the test scenario.
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```sh
 k6 run minimal-test.js
 ```
+
+</CodeBlockFrame>
 
 2. Test Results
    - Once the test run has concluded, k6 will present a comprehensive summary encapsulating the test results, encompassing pivotal performance indicators. This synopsis will incorporate critical metrics such as the rate at which requests were processed, the observed response durations, the frequency of errors or failures encountered, and any other pertinent statistical data relevant to evaluating the system's performance under the simulated load conditions
@@ -225,9 +274,13 @@ k6 run minimal-test.js
 4. Result Output
    - In addition to the real-time display, k6 offers the capability to persist the test results in formats conducive to human comprehension, such as JSON or CSV. This feature facilitates further analysis and visualization of the data obtained during the test execution. To leverage this functionality, you can invoke the `k6 run` command with an additional flag, specifying the desired output format and file name. The command syntax would resemble: `k6 run [script_file_name] --out [output_format]=[output_file_name].[output_extension]`.
 
-```sh title: sh
+<CodeBlockFrame title="sh">
+
+```sh
 k6 run minimal-test.js --out json=minimal-test.json
 ```
+
+</CodeBlockFrame>
 
 5. Result Analysis
    - Stability and Reliability: The application successfully handled a consistent load of 10 concurrent virtual users (VUs) over a 30-second period without any failures. This is evidenced by the 0% failure rate (http_req_failed: 0.00%) and the stable VU count throughout the test.
@@ -252,3 +305,5 @@ Overall, the application shows good performance characteristics for the tested l
 ### Conclusion
 
 In the pursuit of delivering seamless digital experiences, load testing with k6 emerges as a game-changer. This powerful open-source tool equips developers with the ability to proactively identify and address performance bottlenecks, ensuring applications withstand real-world demands. By mastering the four-step roadmap outlined in this article, you gain invaluable insights into crafting targeted test scenarios, executing them with precision, and analyzing the results to make data-driven optimizations. Embrace k6, and unlock the full potential of your digital offerings, captivating users with unparalleled responsiveness and reliability.
+
+---

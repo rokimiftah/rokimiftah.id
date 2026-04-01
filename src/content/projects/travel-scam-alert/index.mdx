@@ -7,6 +7,8 @@ demoURL: "https://scam.web.id"
 repoURL: "https://github.com/rokimiftah/scam.web.id"
 ---
 
+import CodeBlockFrame from "@components/CodeBlockFrame.astro";
+
 ![Travel Scam Alert Globe Visualization](https://cdn.rokimiftah.id/projects/travel-scam-alert/1.avif)
 
 **Travel Scam Alert** is an AI-powered public service platform that visualizes travel scams worldwide through an interactive 3D globe. It combines real-time Reddit data scraping, LLM-powered analysis, voice assistance, and geocoding to help travelers stay safe anywhere.
@@ -81,7 +83,9 @@ Travel Scam Alert aggregates, analyzes, and visualizes scam data at scale:
 
 **Keywords** (filtered):
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 const REDDIT_KEYWORDS = [
   "travel scam",
   "scammed",
@@ -103,6 +107,8 @@ const REDDIT_KEYWORDS = [
 ];
 ```
 
+</CodeBlockFrame>
+
 **Scraping flow**:
 
 1. Firecrawl API calls Reddit's JSON API (no auth needed for public posts)
@@ -114,7 +120,9 @@ const REDDIT_KEYWORDS = [
 
 **Implementation**:
 
-```typescript title: convex/reddit.ts
+<CodeBlockFrame title="convex/reddit.ts">
+
+```typescript
 export const fetchRedditPosts = internalAction({
   args: { subreddit: v.string(), keyword: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -154,6 +162,8 @@ export const fetchRedditPosts = internalAction({
 });
 ```
 
+</CodeBlockFrame>
+
 **Schedule**: Run hourly via Convex cron to keep data fresh.
 
 ### 2. AI-Powered Scam Analysis (OpenAI)
@@ -162,7 +172,9 @@ Each raw Reddit post is analyzed by GPT-4o-mini to extract structured data:
 
 **Analysis output**:
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 interface ScamAnalysis {
   isScamStory: boolean; // Filter out non-scam posts
   confidence: number; // 0-1 (AI confidence)
@@ -181,9 +193,13 @@ interface ScamAnalysis {
 }
 ```
 
+</CodeBlockFrame>
+
 **Prompt engineering** (simplified):
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 const prompt = `
 Analyze this Reddit post about a travel experience. Extract:
 
@@ -209,9 +225,13 @@ Return JSON only.
 `;
 ```
 
+</CodeBlockFrame>
+
 **Implementation**:
 
-```typescript title: convex/aiAnalyzer.ts
+<CodeBlockFrame title="convex/aiAnalyzer.ts">
+
+```typescript
 export const analyzeScamStory = internalAction({
   args: { storyId: v.id("scamStories") },
   handler: async (ctx, args) => {
@@ -250,6 +270,8 @@ export const analyzeScamStory = internalAction({
 });
 ```
 
+</CodeBlockFrame>
+
 **AI confidence filtering**: Only stories with confidence > 0.7 are displayed.
 
 ### 3. Geocoding & Location Normalization (Mapbox)
@@ -265,7 +287,9 @@ Converting "Taj Mahal, India" to `{ lat: 27.1751, lng: 78.0421 }`:
 
 **Solution**: Mapbox Forward Geocoding API + country biasing
 
-```typescript title: convex/geocoding.ts
+<CodeBlockFrame title="convex/geocoding.ts">
+
+```typescript
 export const geocodeAndNormalize = action({
   args: { location: v.string(), country: v.optional(v.string()) },
   handler: async (ctx, args) => {
@@ -300,9 +324,13 @@ export const geocodeAndNormalize = action({
 });
 ```
 
+</CodeBlockFrame>
+
 **Country alias mapping** (for voice assistant):
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 const countryAliasMap: Record<string, string> = {
   Turkey: "Türkiye",
   Turkiye: "Türkiye",
@@ -318,11 +346,15 @@ const countryAliasMap: Record<string, string> = {
 };
 ```
 
+</CodeBlockFrame>
+
 ### 4. Statistics Aggregation
 
 **Per-country stats** stored in `locationStats` table:
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 locationStats: defineTable({
   country: v.string(),
   city: v.optional(v.string()),
@@ -344,6 +376,8 @@ locationStats: defineTable({
 }).index("by_country", ["country"]);
 ```
 
+</CodeBlockFrame>
+
 **Calculation logic**:
 
 1. Count total stories per country
@@ -354,13 +388,17 @@ locationStats: defineTable({
 
 **Risk level formula**:
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 function calculateRiskLevel(totalScams: number): string {
   if (totalScams >= 10) return "HIGH RISK";
   if (totalScams >= 5) return "MEDIUM RISK";
   return "LOW RISK";
 }
 ```
+
+</CodeBlockFrame>
 
 ### 5. 3D Globe Visualization (react-globe.gl)
 
@@ -380,18 +418,19 @@ function calculateRiskLevel(totalScams: number): string {
 
 **Implementation** (simplified):
 
-```tsx title: src/pages/App/index.tsx
+<CodeBlockFrame title="src/pages/App/index.tsx">
+
+```tsx
 import Globe from "react-globe.gl";
 
 function App() {
-const scamStories = useQuery(api.scams.getScamStories);
-const locationStats = useQuery(api.scams.getLocationStats);
+  const scamStories = useQuery(api.scams.getScamStories);
+  const locationStats = useQuery(api.scams.getLocationStats);
 
-// Aggregate points by country
-const countryData = useMemo(() => {
-const map = new Map<string, ScamPoint>();
-
-    scamStories.forEach(story => {
+  // Aggregate points by country
+  const countryData = useMemo(() => {
+    const map = new Map()<string>;
+    scamStories.forEach((story) => {
       const existing = map.get(story.country);
       if (existing) {
         existing.reports++;
@@ -409,38 +448,38 @@ const map = new Map<string, ScamPoint>();
     });
 
     return Array.from(map.values());
+  }, [scamStories]);
 
-}, [scamStories]);
+  // Color countries by risk
+  const polygonsData = useMemo(() => {
+    return countriesGeoJson.features.map((feature) => ({
+      ...feature,
+      properties: {
+        ...feature.properties,
+        scamCount: getScamCount(feature.properties.NAME)
+      }
+    }));
+  }, [countriesGeoJson, countryData]);
 
-// Color countries by risk
-const polygonsData = useMemo(() => {
-return countriesGeoJson.features.map(feature => ({
-...feature,
-properties: {
-...feature.properties,
-scamCount: getScamCount(feature.properties.NAME)
-}
-}));
-}, [countriesGeoJson, countryData]);
-
-return (
-
-<Globe
-globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-polygonsData={polygonsData}
-polygonAltitude={0.01}
-polygonCapColor={d => getRiskColor(d.properties.scamCount)}
-polygonSideColor={() => 'rgba(0, 100, 200, 0.15)'}
-polygonStrokeColor={() => '#111'}
-onPolygonClick={handleCountryClick}
-pointsData={countryData}
-pointAltitude={0.02}
-pointColor={d => getRiskColor(d.reports)}
-pointRadius={d => Math.min(d.reports \* 0.05, 0.5)}
-/>
-);
+  return (
+    <Globe
+      globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+      polygonsData={polygonsData}
+      polygonAltitude={0.01}
+      polygonCapColor={(d) => getRiskColor(d.properties.scamCount)}
+      polygonSideColor={() => "rgba(0, 100, 200, 0.15)"}
+      polygonStrokeColor={() => "#111"}
+      onPolygonClick={handleCountryClick}
+      pointsData={countryData}
+      pointAltitude={0.02}
+      pointColor={(d) => getRiskColor(d.reports)}
+      pointRadius={(d) => Math.min(d.reports * 0.05, 0.5)}
+    />
+  );
 }
 ```
+
+</CodeBlockFrame>
 
 **Performance optimizations**:
 
@@ -468,7 +507,9 @@ Database query → Format response → VAPI speaks answer
 
 **Tool definition**:
 
-```typescript title: convex/vapiTools.ts
+<CodeBlockFrame title="convex/vapiTools.ts">
+
+```typescript
 const tools = [
   {
     type: "function",
@@ -490,9 +531,13 @@ const tools = [
 ];
 ```
 
+</CodeBlockFrame>
+
 **Webhook handler**:
 
-```typescript title: convex/vapiTools.ts
+<CodeBlockFrame title="convex/vapiTools.ts">
+
+```typescript
 export const handleToolCall = httpAction(async (ctx, request) => {
   const body = await request.json();
   const toolCall = body.message?.toolCalls?.[0];
@@ -524,6 +569,8 @@ export const handleToolCall = httpAction(async (ctx, request) => {
 });
 ```
 
+</CodeBlockFrame>
+
 **Response format** (optimized for voice):
 
 ```
@@ -544,7 +591,9 @@ Tips: Use official taxi queues, book verified accommodations."
 
 **scamStories**: Individual scam reports
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 scamStories: defineTable({
   // Reddit metadata
   redditUrl: v.string(),
@@ -599,9 +648,13 @@ scamStories: defineTable({
   .index("by_processed_postDate", ["isProcessed", "postDate"]);
 ```
 
+</CodeBlockFrame>
+
 **locationStats**: Aggregated statistics
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 locationStats: defineTable({
   country: v.string(),
   city: v.optional(v.string()),
@@ -623,9 +676,13 @@ locationStats: defineTable({
 }).index("by_country", ["country"]);
 ```
 
+</CodeBlockFrame>
+
 **scamComments**: Additional context from Reddit comments
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 scamComments: defineTable({
   storyId: v.id("scamStories"),
   redditCommentId: v.string(),
@@ -639,6 +696,8 @@ scamComments: defineTable({
   .index("by_story", ["storyId"])
   .index("by_analyzed", ["isAnalyzedForScam"]);
 ```
+
+</CodeBlockFrame>
 
 ### Indexes Strategy
 
@@ -680,7 +739,9 @@ scamComments: defineTable({
 
 **VoiceAssistantIntegrated**:
 
-```tsx title: src/features/voice/VoiceAssistantIntegrated.tsx
+<CodeBlockFrame title="src/features/voice/VoiceAssistantIntegrated.tsx">
+
+```tsx
 import { useVapi } from "@vapi-ai/web";
 
 function VoiceAssistantIntegrated() {
@@ -710,9 +771,13 @@ function VoiceAssistantIntegrated() {
 }
 ```
 
+</CodeBlockFrame>
+
 **Globe** (lazy loaded):
 
-```tsx title:
+<CodeBlockFrame title="">
+
+```tsx
 const Globe = lazy(() => import("react-globe.gl"));
 
 function GlobeWrapper() {
@@ -724,6 +789,8 @@ function GlobeWrapper() {
 }
 ```
 
+</CodeBlockFrame>
+
 **UserMenu**:
 
 - Profile dropdown
@@ -734,12 +801,16 @@ function GlobeWrapper() {
 
 **Convex real-time queries**:
 
-```typescript title:
+<CodeBlockFrame title="">
+
+```typescript
 // Auto-updates when database changes
 const stories = useQuery(api.scams.getScamStories, { limit: 1000 });
 const stats = useQuery(api.scams.getLocationStats);
 const user = useQuery(api.users.getCurrentUser);
 ```
+
+</CodeBlockFrame>
 
 **Local state** (React hooks):
 
@@ -969,3 +1040,5 @@ const user = useQuery(api.users.getCurrentUser);
 - **Right to deletion**: Account deletion removes all data
 - **Cookie consent**: Banner with opt-out
 - **Privacy policy**: Full disclosure of data usage
+
+---
