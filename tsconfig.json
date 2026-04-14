@@ -7,9 +7,7 @@
       "@layouts/*": ["./src/layouts/*"],
       "@styles/*": ["./src/styles/*"],
       "@types": ["./src/types/index.ts"],
-      "@types/*": ["./src/types/*"],
-      "@utils": ["./src/utils/index.ts"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils": ["./src/utils/index.ts"]
     },
     "strictNullChecks": true
   },
