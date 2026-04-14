@@ -2,35 +2,35 @@
   "name": "rokimiftah.id",
   "type": "module",
   "scripts": {
-    "astro": "bunx --bun astro",
-    "build": "bunx --bun astro build",
-    "dev": "bunx --bun astro dev",
+    "astro": "bunx astro",
+    "build": "bunx astro build",
+    "dev": "bunx astro dev",
     "format": "prettier --write .",
     "format:lint:typecheck": "bun run format && bun run lint:typecheck",
     "lint": "biome check --write .",
     "lint:typecheck": "bun run lint && bun run typecheck",
-    "preview": "bunx --bun astro preview",
+    "preview": "bunx astro preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.3.14",
+    "@astrojs/mdx": "5.0.3",
     "@astrojs/sitemap": "^3.7.2",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
-    "astro": "^5.18.1",
-    "astro-seo": "^0.8.4",
+    "astro": "6.1.6",
+    "astro-seo": "^1.1.0",
     "clsx": "^2.1.1",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.9",
-    "prettier": "^3.8.1",
+    "@biomejs/biome": "^2.4.11",
+    "prettier": "^3.8.2",
     "prettier-plugin-astro": "^0.14.1",
-    "prettier-plugin-astro-organize-imports": "^0.4.11",
+    "prettier-plugin-astro-organize-imports": "^0.4.12",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "wrangler": "^4.78.0"
+    "wrangler": "^4.82.2"
   }
 }
