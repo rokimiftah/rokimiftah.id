@@ -1,9 +1,15 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "baseUrl": ".",
     "paths": {
-      "@*": ["src/*"]
+      "@components/*": ["./src/components/*"],
+      "@config/*": ["./src/config/*"],
+      "@layouts/*": ["./src/layouts/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@types": ["./src/types/index.ts"],
+      "@types/*": ["./src/types/*"],
+      "@utils": ["./src/utils/index.ts"],
+      "@utils/*": ["./src/utils/*"]
     },
     "strictNullChecks": true
   },
