@@ -60,6 +60,8 @@ const titleSlug = title
 </nav>
 
 <script>
+  import { findActiveHeadingSlug } from "@utils";
+
   function initTableOfContents() {
     const tocNav = document.getElementById("table-of-contents");
     if (!tocNav) return;
@@ -113,19 +115,13 @@ const titleSlug = title
     }
 
     function findActiveHeading() {
-      // Find the heading closest to the top of the viewport
-      let activeSlug: string | null = null;
-      const scrollPosition = window.scrollY + 100; // Offset for better UX
-
-      for (let i = headings.length - 1; i >= 0; i--) {
-        const heading = headings[i];
-        const headingTop = heading.element.offsetTop;
-
-        if (scrollPosition >= headingTop) {
-          activeSlug = heading.slug;
-          break;
-        }
-      }
+      const documentHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+      const activeSlug = findActiveHeadingSlug({
+        headings: headings.map((heading) => ({ slug: heading.slug, offsetTop: heading.element.offsetTop })),
+        scrollY: window.scrollY,
+        viewportHeight: window.innerHeight,
+        documentHeight
+      });
 
       setActiveLink(activeSlug);
     }
