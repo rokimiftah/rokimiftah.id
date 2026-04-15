@@ -39,7 +39,7 @@ const titleSlug = title
         Table of Contents
       </a>
     </h2>
-    <div id="toc-scroll-container" class="max-h-[calc(80vh-8rem)] overflow-y-auto pr-2">
+    <div id="toc-scroll-container" class="max-h-[calc(80vh-8rem)] overflow-y-auto [overscroll-behavior-y:contain] pr-2">
       <ul class="relative space-y-0.5 text-sm">
         {
           headings.map((heading) => (
