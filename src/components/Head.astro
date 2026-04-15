@@ -19,7 +19,8 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
   extend={{
     meta: [
       { name: "viewport", content: "width=device-width,initial-scale=1" },
-      { name: "generator", content: `${Astro.generator}` }
+      { name: "generator", content: `${Astro.generator}` },
+      { property: "og:site_name", content: SITE.TITLE }
     ],
     link: [
       { rel: "preconnect", href: "https://cdn.rokimiftah.id", crossorigin: "" },
@@ -46,6 +47,7 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE.TITLE,
+    alternateName: "rokimiftah.id",
     url: Astro.site
   })}
 />
@@ -57,14 +59,20 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
 
   const copyIconSuccess = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" color="#ffffff" fill="none"><path d="M3 13.3333C3 13.3333 4.5 14 6.5 17C6.5 17 6.78485 16.5192 7.32133 15.7526M17 6C14.7085 7.14577 12.3119 9.55181 10.3879 11.8223" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 13.3333C8 13.3333 9.5 14 11.5 17C11.5 17 17 8.5 22 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+  const copyResetTimeouts = new Set<number>();
+  let cleanupCurrentPage = () => {};
+  let activeController = new AbortController();
+
   function handleCopyCode(button: HTMLElement, code: string) {
     navigator.clipboard
       .writeText(code)
       .then(() => {
         button.innerHTML = copyIconSuccess;
-        setTimeout(() => {
-          button.innerHTML = copyIcon;
+        const timeoutId = window.setTimeout(() => {
+          if (button.isConnected) button.innerHTML = copyIcon;
+          copyResetTimeouts.delete(timeoutId);
         }, 1000);
+        copyResetTimeouts.add(timeoutId);
       })
       .catch((err) => {
         console.error("Failed to copy code: ", err);
@@ -72,7 +80,17 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
       });
   }
 
-  function initializeCopyButtons() {
+  function clearCopyResetTimeouts() {
+    copyResetTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    copyResetTimeouts.clear();
+  }
+
+  function removeZoomOverlay() {
+    const zoomOverlay = document.querySelector(".img-zoom-overlay");
+    zoomOverlay?.remove();
+  }
+
+  function initializeCopyButtons(signal: AbortSignal) {
     const codeBlocks = document.querySelectorAll(".frame-code");
 
     codeBlocks.forEach((codeBlock) => {
@@ -80,20 +98,20 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
       const codeElement = codeBlock.querySelector("code") as HTMLElement | null;
 
       if (button && codeElement) {
-        const code = codeElement.innerText.trim();
-        button.addEventListener("click", () => handleCopyCode(button, code));
+        const code = codeElement.textContent?.trim() ?? "";
+        const onClick = () => handleCopyCode(button, code);
+        button.addEventListener("click", onClick, { signal });
       }
     });
   }
 
-  function setLinkTargets(selectors: string[]): void {
-    selectors.forEach((selector) => {
-      const links = document.querySelectorAll(selector);
-      links.forEach((link) => {
-        if (link instanceof HTMLAnchorElement) {
-          link.target = "_blank";
-        }
-      });
+  function setExternalLinkTargets(): void {
+    document.querySelectorAll<HTMLAnchorElement>("article a[href]").forEach((link) => {
+      if (link.protocol === "mailto:" || link.protocol === "tel:") return;
+      if (link.origin === window.location.origin) return;
+
+      link.target = "_blank";
+      link.rel = ["noopener", "noreferrer"].join(" ");
     });
   }
 
@@ -113,76 +131,127 @@ const titleTemplate = title && title !== SITE.TITLE ? `%s - ${SITE.TITLE}` : und
     });
   }
 
-  function initialize() {
-    initializeCopyButtons();
+  function createZoomOverlay(signal: AbortSignal) {
+    const zoomOverlay = document.createElement("div");
+    zoomOverlay.className = "img-zoom-overlay";
 
-    setLinkTargets(["article > p > a", "article > ul > li > a"]);
+    const zoomImg = document.createElement("img");
+    zoomImg.className = "img-zoom-img";
+    zoomOverlay.appendChild(zoomImg);
+    document.body.appendChild(zoomOverlay);
 
-    document.addEventListener("scroll", onScroll);
+    let isOpen = false;
 
-    const backToTop = document.getElementById("back-to-top");
-    backToTop?.addEventListener("click", (event) => scrollToTop(event));
-
-    // Set lazy loading hints for article images
-    document.querySelectorAll("article img").forEach((img) => {
-      if (img instanceof HTMLImageElement) {
-        if (!img.hasAttribute("loading")) img.loading = "lazy";
-        if (!img.hasAttribute("decoding")) img.decoding = "async";
-        if (!img.hasAttribute("fetchpriority")) img.fetchPriority = "low";
-        img.classList.add("img-zoomable");
-      }
-    });
-
-    // Image zoom lightbox
-    let zoomOverlay: HTMLDivElement | null = null;
-    let zoomImg: HTMLImageElement | null = null;
-
-    function preventScroll(e: Event) {
-      e.preventDefault();
-    }
-
-    function createOverlay() {
-      if (zoomOverlay) return;
-      zoomOverlay = document.createElement("div");
-      zoomOverlay.className = "img-zoom-overlay";
-      zoomImg = document.createElement("img");
-      zoomImg.className = "img-zoom-img";
-      zoomOverlay.appendChild(zoomImg);
-      document.body.appendChild(zoomOverlay);
-
-      zoomOverlay.addEventListener("click", closeZoom);
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeZoom();
-      });
-    }
-
-    function openZoom(src: string, alt: string) {
-      createOverlay();
-      if (!zoomOverlay || !zoomImg) return;
-      zoomImg.src = src;
-      zoomImg.alt = alt;
-      zoomOverlay.classList.add("active");
-      document.addEventListener("wheel", preventScroll, { passive: false });
-      document.addEventListener("touchmove", preventScroll, { passive: false });
-    }
-
-    function closeZoom() {
-      if (!zoomOverlay) return;
+    const closeZoom = () => {
       zoomOverlay.classList.remove("active");
+      if (!isOpen) return;
+
       document.removeEventListener("wheel", preventScroll);
       document.removeEventListener("touchmove", preventScroll);
-    }
+      isOpen = false;
+    };
 
-    document.querySelectorAll("article .img-zoomable").forEach((img) => {
-      img.addEventListener("click", (e) => {
-        e.preventDefault();
-        if (img instanceof HTMLImageElement) {
-          openZoom(img.src, img.alt);
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+    };
+
+    zoomOverlay.addEventListener("click", closeZoom, { signal });
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Escape") closeZoom();
+      },
+      { signal }
+    );
+
+    return {
+      open(src: string, alt: string) {
+        zoomImg.src = src;
+        zoomImg.alt = alt;
+        zoomOverlay.classList.add("active");
+
+        if (!isOpen) {
+          document.addEventListener("wheel", preventScroll, { passive: false });
+          document.addEventListener("touchmove", preventScroll, { passive: false });
+          isOpen = true;
         }
-      });
+      },
+      destroy() {
+        closeZoom();
+        zoomOverlay.remove();
+      }
+    };
+  }
+
+  function initializeZoomableImages(signal: AbortSignal) {
+    const zoomTargets = document.querySelectorAll("article img");
+    if (zoomTargets.length === 0) return;
+
+    const zoom = createZoomOverlay(signal);
+
+    zoomTargets.forEach((img) => {
+      if (!(img instanceof HTMLImageElement)) return;
+
+      if (!img.hasAttribute("loading")) img.loading = "lazy";
+      if (!img.hasAttribute("decoding")) img.decoding = "async";
+      if (!img.hasAttribute("fetchpriority")) img.fetchPriority = "low";
+
+      img.classList.add("img-zoomable");
+      img.tabIndex = 0;
+      img.setAttribute("role", "button");
+      img.setAttribute("aria-label", img.alt ? `Zoom image: ${img.alt}` : "Zoom image");
+
+      const openZoom = () => zoom.open(img.src, img.alt);
+
+      img.addEventListener("click", openZoom, { signal });
+      img.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openZoom();
+          }
+        },
+        { signal }
+      );
     });
 
+    return zoom.destroy;
+  }
+
+  function setupPageBehavior() {
+    cleanupCurrentPage();
+    activeController.abort();
+    activeController = new AbortController();
+
+    clearCopyResetTimeouts();
+    removeZoomOverlay();
+
+    const { signal } = activeController;
+
+    initializeCopyButtons(signal);
+    setExternalLinkTargets();
+
+    window.addEventListener("scroll", onScroll, { passive: true, signal });
+
+    const backToTop = document.getElementById("back-to-top");
+    if (backToTop) {
+      backToTop.addEventListener("click", scrollToTop, { signal });
+    }
+
+    const destroyZoom = initializeZoomableImages(signal);
+
     onScroll();
+
+    cleanupCurrentPage = () => {
+      destroyZoom?.();
+      clearCopyResetTimeouts();
+      removeZoomOverlay();
+    };
+  }
+
+  function initialize() {
+    setupPageBehavior();
   }
 
   document.addEventListener("DOMContentLoaded", initialize);

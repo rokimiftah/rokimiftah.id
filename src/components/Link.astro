@@ -4,15 +4,15 @@ import { cn } from "@utils";
 type Props = {
   href: string;
   external?: boolean;
-  underline?: boolean;
 };
 
-const { href, external, underline = true, ...rest } = Astro.props;
+const { href, external, ...rest } = Astro.props;
 ---
 
 <a
   href={href}
-  target={external ? "_blank" : "_self"}
+  target={external ? "_blank" : undefined}
+  rel={external ? "noopener noreferrer" : undefined}
   class={cn("inline-block rounded hover:bg-[#46433b] hover:text-[#faf9f6]")}
   {...rest}
 >

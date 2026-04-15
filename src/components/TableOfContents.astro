@@ -62,7 +62,18 @@ const titleSlug = title
 <script>
   import { findActiveHeadingSlug } from "@utils";
 
+  let activeController = new AbortController();
+  let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
+
   function initTableOfContents() {
+    activeController.abort();
+    activeController = new AbortController();
+
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = undefined;
+    }
+
     const tocNav = document.getElementById("table-of-contents");
     if (!tocNav) return;
 
@@ -127,7 +138,6 @@ const titleSlug = title
     }
 
     // Handle scroll events
-    let scrollTimeout: ReturnType<typeof setTimeout>;
     function onScroll() {
       if (scrollTimeout) clearTimeout(scrollTimeout);
 
@@ -140,30 +150,34 @@ const titleSlug = title
 
     // Handle clicks on TOC links
     tocLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        isScrolling = true;
+      link.addEventListener(
+        "click",
+        (e) => {
+          e.preventDefault();
+          isScrolling = true;
 
-        const slug = link.getAttribute("data-slug");
-        if (slug) {
-          const target = document.getElementById(slug);
-          if (target) {
-            setActiveLink(slug);
-            target.scrollIntoView({ behavior: "smooth" });
+          const slug = link.getAttribute("data-slug");
+          if (slug) {
+            const target = document.getElementById(slug);
+            if (target) {
+              setActiveLink(slug);
+              target.scrollIntoView({ behavior: "smooth" });
 
-            // Update URL without jumping
-            history.pushState(null, "", `#${slug}`);
+              // Update URL without jumping
+              history.pushState(null, "", `#${slug}`);
 
-            setTimeout(() => {
-              isScrolling = false;
-            }, 1000);
+              setTimeout(() => {
+                isScrolling = false;
+              }, 1000);
+            }
           }
-        }
-      });
+        },
+        { signal: activeController.signal }
+      );
     });
 
     // Listen to scroll events
-    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true, signal: activeController.signal });
 
     // Initial check
     findActiveHeading();

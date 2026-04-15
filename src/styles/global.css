@@ -50,8 +50,8 @@
 }
 
 @theme {
-  --font-sans: "Open Sans", "sans-serif";
-  --font-onest: "Onest", "sans-serif";
+  --font-sans: "Open Sans", sans-serif;
+  --font-onest: "Onest", sans-serif;
 }
 
 /* Global styles */
@@ -169,7 +169,7 @@ blockquote > p {
 }
 
 blockquote ul,
-li {
+blockquote li {
   @apply p-0.5 text-[#000000];
 }
 
